@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BONBON.BOLD — Confiserie Créative & Acidulée</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 1. FOND PASTEL DOUX CONSERVÉ */
+        body {
+            background: linear-gradient(135deg, #FDF2F8 0%, #F3E8FF 50%, #ECFDF5 100%);
+        }
+
+        /* 2. ANIMATIONS DES FORMES PASTEL EN ARRIÈRE-PLAN CONSERVÉES */
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes morphShape {
+            0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; transform: translate(0, 0) rotate(0deg); }
+            34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; transform: translate(30px, -40px) rotate(120deg); }
+            67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; transform: translate(-30px, 30px) rotate(240deg); }
+        }
+        @keyframes bounceFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-25px) scale(1.06); }
+        }
+
+        .shape-spin { animation: spinSlow 20s linear infinite; }
+        .shape-morph { animation: morphShape 14s ease-in-out infinite; }
+        .shape-bounce { animation: bounceFloat 6s ease-in-out infinite; }
+
+        /* 3. LETTRES INTERACTIVES QUI BOUGENT AU SURVOL DE LA SOURIS CONSERVÉES */
+        .wavy-letter {
+            display: inline-block;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease;
+            cursor: default;
+        }
+        .wavy-letter:hover {
+            transform: translateY(-18px) rotate(-8deg) scale(1.15);
+            color: #ec4899; /* Rose vif au survol */
+        }
+        .wavy-letter:nth-child(even):hover {
+            transform: translateY(-18px) rotate(8deg) scale(1.15);
+            color: #6366f1; /* Indigo au survol */
+        }
+        .wavy-letter:nth-child(3n):hover {
+            transform: translateY(-20px) rotate(-5deg) scale(1.15);
+            color: #10b981; /* Vert menthe au survol */
+        }
+
+        /* 4. BANDEAU DE TEXTE GÉANT QUI DÉFILE (MARQUEE) CONSERVÉ */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 18s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+
+        /* 5. NOUVELLES ANIMATIONS GOURMANDES : EFFET GÉLATINE (JELLY WOBBLE) */
+        @keyframes jellyWobble {
+            0% { transform: scale(1, 1); }
+            25% { transform: scale(1.08, 0.92); }
+            50% { transform: scale(0.94, 1.06); }
+            75% { transform: scale(1.03, 0.97); }
+            100% { transform: scale(1, 1); }
+        }
+        .jelly-hover:hover {
+            animation: jellyWobble 0.55s ease-in-out;
+        }
+        .jelly-active:active {
+            animation: jellyWobble 0.4s ease-in-out;
+        }
+
+        /* Animation rebond badge panier */
+        @keyframes cartPop {
+            0% { transform: scale(1) rotate(0deg); }
+            30% { transform: scale(1.35) rotate(-12deg); }
+            60% { transform: scale(0.9) rotate(8deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .animate-cart-pop {
+            animation: cartPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Apparition douce au scroll */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-on-scroll.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Particules de confettis sucrés */
+        .candy-confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            border: 2px solid #1e293b;
+            transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.85s ease-out;
+        }
+
+        /* Custom scrollbar pastel */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FDF2F8;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FBCFE8;
+            border: 2px solid #1e293b;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 font-sans overflow-x-hidden selection:bg-pink-200 selection:text-slate-900">
+
+    <!-- FORMES PASTEL QUI BOUGENT EN ARRIÈRE-PLAN (CONSERVÉES + ÉLÉMENTS SUCRÉS) -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <!-- Forme organique pêche pastel -->
+        <div id="shape-1" class="shape-morph absolute top-16 left-[5%] w-80 h-80 bg-[#FDE68A]/60"></div>
+        
+        <!-- Grand cercle rose pastel -->
+        <div id="shape-2" class="shape-bounce absolute top-[45%] right-[5%] w-96 h-96 rounded-full bg-[#FBCFE8]/60"></div>
+        
+        <!-- Carré lavande pastel qui tourne -->
+        <div id="shape-3" class="shape-spin absolute bottom-[10%] left-[15%] w-64 h-64 rounded-3xl border-[16px] border-[#DDD6FE]/80"></div>
+        
+        <!-- Étoile menthe pastel qui tourne -->
+        <div class="shape-spin absolute top-[20%] right-[25%] text-[#A7F3D0] text-8xl font-black select-none" style="animation-duration: 12s;">✦</div>
+
+        <!-- Nouveaux petits bonbons subtils flottants -->
+        <div id="shape-4" class="shape-bounce absolute bottom-[28%] right-[18%] text-5xl opacity-50 select-none" style="animation-delay: 1.5s;">🍬</div>
+        <div class="shape-spin absolute top-[62%] left-[8%] text-[#FBCFE8] text-6xl font-black select-none" style="animation-duration: 16s;">✿</div>
+    </div>
+
+    <!-- NAVBAR FIXE -->
+    <header class="fixed w-full top-0 z-40 bg-white/85 backdrop-blur-md border-b-2 border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+            <!-- Logo à gauche -->
+            <a href="#" class="font-display font-extrabold text-xl sm:text-2xl tracking-tighter uppercase inline-flex items-center gap-2.5 shrink-0 whitespace-nowrap text-slate-900 group leading-none">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-pink-300 border-2 border-slate-800 rounded-full text-sm shrink-0 group-hover:rotate-180 transition-transform duration-500">🍬</span>
+                <span>BONBON<span class="text-pink-500">.BOLD</span></span>
+            </a>
+
+            <!-- Navigation centrale -->
+            <nav class="hidden lg:flex items-center gap-6 xl:gap-8 font-bold text-xs uppercase tracking-wider text-slate-700 whitespace-nowrap">
+                <a href="#saveurs" class="inline-flex items-center hover:text-pink-500 transition-colors">Saveurs</a>
+                <a href="#boutique" class="inline-flex items-center hover:text-indigo-500 transition-colors">La Boutique</a>
+                <a href="#sachet-perso" class="inline-flex items-center hover:text-emerald-600 transition-colors">Sachet Sur-Mesure</a>
+                <a href="#avis" class="inline-flex items-center hover:text-amber-600 transition-colors">Avis</a>
+            </nav>
+
+            <!-- Actions à droite -->
+            <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+                <a href="#sachet-perso" class="hidden sm:inline-flex items-center justify-center gap-1.5 h-10 px-4 bg-[#FDE68A] border-2 border-slate-800 rounded-full font-extrabold text-xs uppercase tracking-wider whitespace-nowrap leading-none shadow-[3px_3px_0px_#1e293b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    <span>Mixer</span>
+                    <span aria-hidden="true">✨</span>
+                </a>
+
+                <!-- Bouton Panier Interactif parfaitement aligné -->
+                <button id="cart-btn" onclick="toggleCart()" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-[#FBCFE8] border-2 border-slate-800 rounded-full font-extrabold text-xs uppercase tracking-wider whitespace-nowrap leading-none shadow-[3px_3px_0px_#1e293b] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer">
+                    <span class="inline-flex items-center gap-1.5">
+                        <span aria-hidden="true">🛍️</span>
+                        <span>Panier</span>
+                    </span>
+                    <span id="cart-count" class="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 bg-slate-900 text-white rounded-full text-[11px] font-extrabold leading-none">0</span>
+                </button>
+
+                <!-- Bouton Menu Mobile -->
+                <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu" class="lg:hidden inline-flex items-center justify-center w-10 h-10 bg-white border-2 border-slate-800 rounded-full font-extrabold text-base shadow-[3px_3px_0px_#1e293b] hover:bg-[#DDD6FE] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer shrink-0">
+                    <span id="mobile-menu-icon">☰</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu déroulant Mobile / Tablette -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white/95 backdrop-blur-md border-t-2 border-slate-800 px-6 py-4">
+            <nav class="flex flex-col space-y-3 font-extrabold text-sm uppercase tracking-wider text-slate-800">
+                <a href="#saveurs" onclick="toggleMobileMenu(false)" class="py-1.5 hover:text-pink-500 transition-colors">Saveurs</a>
+                <a href="#boutique" onclick="toggleMobileMenu(false)" class="py-1.5 hover:text-indigo-500 transition-colors">La Boutique</a>
+                <a href="#sachet-perso" onclick="toggleMobileMenu(false)" class="py-1.5 hover:text-emerald-600 transition-colors">Sachet Sur-Mesure</a>
+                <a href="#avis" onclick="toggleMobileMenu(false)" class="py-1.5 hover:text-amber-600 transition-colors">Avis</a>
+                <a href="#sachet-perso" onclick="toggleMobileMenu(false)" class="sm:hidden mt-2 inline-flex items-center justify-center gap-2 py-3 px-4 bg-[#FDE68A] border-2 border-slate-800 rounded-2xl text-xs shadow-[3px_3px_0px_#1e293b]">
+                    <span>Mixer mon sachet ✨</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO SECTION AVEC LETTRES QUI BOUGENT AU SURVOL -->
+    <section class="min-h-screen flex flex-col justify-center pt-24 pb-12 px-6 max-w-7xl mx-auto relative">
+        <div class="flex flex-wrap items-center justify-end gap-4 mb-6">
+            <!-- Petite carte nouveauté flottante -->
+            <button onclick="quickAddById(1)" class="jelly-hover group flex items-center gap-3 px-4 py-2 bg-[#FEF3C7] border-2 border-slate-800 rounded-2xl shadow-[4px_4px_0px_#1e293b] hover:bg-[#FDE68A] transition-all text-left cursor-pointer">
+                <div id="hero-novelty-thumb" class="w-11 h-11 rounded-xl bg-white border-2 border-slate-800 overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform shrink-0 p-0.5"></div>
+                <div>
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider text-pink-600">Nouveauté • + Ajouter</div>
+                    <div class="text-xs font-extrabold text-slate-900">Oursons Acidulés Mix</div>
+                </div>
+            </button>
+        </div>
+
+        <h1 id="interactive-title" class="font-display font-extrabold text-4xl sm:text-6xl lg:text-[95px] uppercase leading-[0.98] tracking-tight mb-8 text-slate-900">
+            DES IDÉES &<br>
+            <span class="whitespace-nowrap">DOUCEURS</span><br>
+            ACIDULÉES.
+        </h1>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-4">
+            <p class="max-w-lg text-lg font-medium text-slate-700 leading-relaxed">
+                Découvrez nos confiseries artisanales aux couleurs pastel, sans arômes artificiels et 100% régressives.
+            </p>
+            <div class="flex flex-wrap items-center gap-4">
+                <a href="#boutique" class="jelly-hover w-fit px-8 py-4 bg-[#FBCFE8] text-slate-900 border-2 border-slate-800 rounded-2xl font-display font-extrabold text-base sm:text-lg uppercase shadow-[5px_5px_0px_#1e293b] hover:bg-pink-300 transition-all">
+                    Explorer la boutique ↓
+                </a>
+                <a href="#sachet-perso" class="jelly-hover w-fit px-7 py-4 bg-white text-slate-900 border-2 border-slate-800 rounded-2xl font-display font-extrabold text-base sm:text-lg uppercase shadow-[5px_5px_0px_#1e293b] hover:bg-[#A7F3D0] transition-all">
+                    Créer mon mix 🎨
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- BANDEAU DÉFILANT PASTEL (MARQUEE CONSERVÉ) -->
+    <div class="py-5 bg-slate-900 text-[#FDE68A] border-y-2 border-slate-900 overflow-hidden">
+        <div class="animate-marquee font-display font-extrabold text-3xl sm:text-5xl uppercase tracking-wider">
+            <span class="mx-6">BONBONS ARTISANAUX</span> <span>✦</span>
+            <span class="mx-6 text-white">ACIDULÉS & PIK</span> <span>✦</span>
+            <span class="mx-6 text-[#FBCFE8]">GUIMAUVES NUAGES</span> <span>✦</span>
+            <span class="mx-6 text-[#A7F3D0]">BOX SUR-MESURE</span> <span>✦</span>
+            <!-- Répétition -->
+            <span class="mx-6">BONBONS ARTISANAUX</span> <span>✦</span>
+            <span class="mx-6 text-white">ACIDULÉS & PIK</span> <span>✦</span>
+            <span class="mx-6 text-[#FBCFE8]">GUIMAUVES NUAGES</span> <span>✦</span>
+            <span class="mx-6 text-[#A7F3D0]">BOX SUR-MESURE</span> <span>✦</span>
+        </div>
+    </div>
+
+    <!-- SECTION CATÉGORIES / UNIVERS ("NOS SUPER SAVEURS") -->
+    <section id="saveurs" class="py-24 px-6 max-w-7xl mx-auto reveal-on-scroll">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4">
+            <h2 class="font-display font-extrabold text-4xl sm:text-6xl uppercase tracking-tighter text-slate-900">
+                NOS <span class="underline decoration-pink-300 decoration-8">SUPER</span> SAVEURS
+            </h2>
+            <p class="font-bold text-slate-600 uppercase text-xs tracking-wider">Cliquez sur une famille pour filtrer la boutique</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Carte 1 -->
+            <div onclick="filterAndScroll('acidule')" class="jelly-hover cursor-pointer group bg-white/90 backdrop-blur-sm border-2 border-slate-800 rounded-3xl p-8 shadow-[6px_6px_0px_#1e293b] hover:-translate-y-2 hover:bg-[#FEF3C7] transition-all duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="font-display font-extrabold text-6xl text-indigo-500 group-hover:scale-110 transition-transform origin-left">01</div>
+                    <span class="text-4xl">⚡🍋</span>
+                </div>
+                <h3 class="font-display font-extrabold text-2xl uppercase mb-3 text-slate-900">Acidulés & Pik</h3>
+                <p class="text-slate-700 font-medium mb-4">Des rubans piquants, des têtes brûlées pastel et des oursons enrobés de sucre citrique qui réveillent les papilles.</p>
+                <span class="inline-block text-xs font-extrabold uppercase underline decoration-2">Voir les piquants →</span>
+            </div>
+
+            <!-- Carte 2 -->
+            <div onclick="filterAndScroll('guimauve')" class="jelly-hover cursor-pointer group bg-white/90 backdrop-blur-sm border-2 border-slate-800 rounded-3xl p-8 shadow-[6px_6px_0px_#1e293b] hover:-translate-y-2 hover:bg-[#FCE7F3] transition-all duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="font-display font-extrabold text-6xl text-pink-500 group-hover:scale-110 transition-transform origin-left">02</div>
+                    <span class="text-4xl">☁️🍓</span>
+                </div>
+                <h3 class="font-display font-extrabold text-2xl uppercase mb-3 text-slate-900">Guimauves Nuages</h3>
+                <p class="text-slate-700 font-medium mb-4">Fondantes comme un nuage d'été, parfumées à la fraise des bois, vanille de Madagascar et fleur d'oranger.</p>
+                <span class="inline-block text-xs font-extrabold uppercase underline decoration-2">Voir les nuages →</span>
+            </div>
+
+            <!-- Carte 3 -->
+            <div onclick="filterAndScroll('fruite')" class="jelly-hover cursor-pointer group bg-white/90 backdrop-blur-sm border-2 border-slate-800 rounded-3xl p-8 shadow-[6px_6px_0px_#1e293b] hover:-translate-y-2 hover:bg-[#D1FAE5] transition-all duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="font-display font-extrabold text-6xl text-emerald-500 group-hover:scale-110 transition-transform origin-left">03</div>
+                    <span class="text-4xl">🍑🍒</span>
+                </div>
+                <h3 class="font-display font-extrabold text-2xl uppercase mb-3 text-slate-900">Fruités & Gélatine</h3>
+                <p class="text-slate-700 font-medium mb-4">Tendres bouchées aux vrais jus de fruits : litchi-rose, mangue passion, pêche veloutée et cerise griotte.</p>
+                <span class="inline-block text-xs font-extrabold uppercase underline decoration-2">Voir les fruités →</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CATALOGUE BOUTIQUE ("LA BOUTIQUE SUCRÉE") -->
+    <section id="boutique" class="py-20 px-6 max-w-7xl mx-auto reveal-on-scroll">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+                <span class="inline-block px-3 py-1 bg-[#DDD6FE] border-2 border-slate-800 rounded-full font-extrabold text-xs uppercase mb-3">Fabriqués en petits lots</span>
+                <h2 class="font-display font-extrabold text-4xl sm:text-6xl uppercase tracking-tighter text-slate-900">
+                    LA BOUTIQUE <span class="text-indigo-500">SUCRÉE</span>
+                </h2>
+            </div>
+
+            <!-- Barre de filtres interactifs -->
+            <div id="filter-bar" class="flex flex-wrap gap-2">
+                <button data-filter="all" onclick="setFilter('all')" class="filter-btn active px-4 py-2 rounded-full border-2 border-slate-800 font-extrabold text-xs uppercase bg-slate-900 text-white shadow-[3px_3px_0px_#1e293b] transition-all cursor-pointer">
+                    Tous (8)
+                </button>
+                <button data-filter="acidule" onclick="setFilter('acidule')" class="filter-btn px-4 py-2 rounded-full border-2 border-slate-800 font-extrabold text-xs uppercase bg-white hover:bg-[#FEF3C7] shadow-[3px_3px_0px_#1e293b] transition-all cursor-pointer">
+                    ⚡ Acidulés
+                </button>
+                <button data-filter="guimauve" onclick="setFilter('guimauve')" class="filter-btn px-4 py-2 rounded-full border-2 border-slate-800 font-extrabold text-xs uppercase bg-white hover:bg-[#FCE7F3] shadow-[3px_3px_0px_#1e293b] transition-all cursor-pointer">
+                    ☁️ Guimauves
+                </button>
+                <button data-filter="fruite" onclick="setFilter('fruite')" class="filter-btn px-4 py-2 rounded-full border-2 border-slate-800 font-extrabold text-xs uppercase bg-white hover:bg-[#D1FAE5] shadow-[3px_3px_0px_#1e293b] transition-all cursor-pointer">
+                    🍒 Fruités
+                </button>
+                <button data-filter="coffret" onclick="setFilter('coffret')" class="filter-btn px-4 py-2 rounded-full border-2 border-slate-800 font-extrabold text-xs uppercase bg-white hover:bg-[#DDD6FE] shadow-[3px_3px_0px_#1e293b] transition-all cursor-pointer">
+                    🎁 Coffrets
+                </button>
+            </div>
+        </div>
+
+        <!-- Grille des produits (générée dynamiquement en JS) -->
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+            <!-- Les cartes produits s'insèrent ici -->
+        </div>
+    </section>
+
+    <!-- SECTION INTERACTIVE "COMPOSE TON SACHET SUR-MESURE" -->
+    <section id="sachet-perso" class="py-24 px-6 max-w-5xl mx-auto reveal-on-scroll">
+        <div class="bg-[#EDE9FE] border-2 border-slate-800 rounded-3xl p-6 sm:p-12 shadow-[8px_8px_0px_#1e293b] relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <span class="inline-block px-3 py-1 bg-[#FDE68A] border-2 border-slate-800 rounded-full font-extrabold text-xs uppercase mb-2">Atelier Mix & Match</span>
+                    <h2 class="font-display font-extrabold text-3xl sm:text-5xl uppercase text-slate-900">Compose ton Sachet</h2>
+                </div>
+                <div class="px-4 py-2 bg-white border-2 border-slate-800 rounded-2xl font-bold text-xs uppercase shadow-[3px_3px_0px_#1e293b]">
+                    Jusqu'à <span id="max-flavors-label" class="text-pink-600 font-extrabold">3</span> parfums inclus
+                </div>
+            </div>
+
+            <p class="text-slate-700 font-medium mb-8">1. Choisis le format de ton sachet • 2. Sélectionne tes bonbons préférés à mélanger :</p>
+
+            <!-- Étape 1 : Choix de la taille -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <button onclick="selectBagSize(this, 'Petit Sachet (250g)', 6.50, 3)" class="size-btn selected jelly-active p-4 rounded-2xl bg-[#FBCFE8] border-2 border-slate-800 text-left font-bold shadow-[4px_4px_0px_#1e293b] transition-all cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-lg">🍬 Petit (250g)</span>
+                        <span class="text-xs px-2 py-0.5 bg-white border border-slate-800 rounded-full">3 parfums</span>
+                    </div>
+                    <div class="text-indigo-700 font-display font-extrabold text-2xl">6,50 €</div>
+                </button>
+
+                <button onclick="selectBagSize(this, 'Moyen Sachet (500g)', 11.90, 4)" class="size-btn jelly-active p-4 rounded-2xl bg-white border-2 border-slate-800 text-left font-bold hover:bg-[#FEF3C7] shadow-[4px_4px_0px_#1e293b] transition-all cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-lg">🍭 Moyen (500g)</span>
+                        <span class="text-xs px-2 py-0.5 bg-[#A7F3D0] border border-slate-800 rounded-full">4 parfums</span>
+                    </div>
+                    <div class="text-indigo-700 font-display font-extrabold text-2xl">11,90 €</div>
+                </button>
+
+                <button onclick="selectBagSize(this, 'Sachet Géant (1kg)', 19.90, 6)" class="size-btn jelly-active p-4 rounded-2xl bg-white border-2 border-slate-800 text-left font-bold hover:bg-[#FEF3C7] shadow-[4px_4px_0px_#1e293b] transition-all cursor-pointer">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-lg">👑 Géant (1kg)</span>
+                        <span class="text-xs px-2 py-0.5 bg-[#FDE68A] border border-slate-800 rounded-full">6 parfums</span>
+                    </div>
+                    <div class="text-indigo-700 font-display font-extrabold text-2xl">19,90 €</div>
+                </button>
+            </div>
+
+            <!-- Étape 2 : Choix des bonbons -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-extrabold text-xs uppercase tracking-wider text-slate-700">Sélectionne tes bonbons :</span>
+                    <span id="bag-fill-text" class="font-extrabold text-xs text-indigo-600">0 / 3 choisis</span>
+                </div>
+                <!-- Jauge visuelle de remplissage du sachet -->
+                <div class="w-full h-4 bg-white border-2 border-slate-800 rounded-full overflow-hidden mb-5">
+                    <div id="bag-fill-bar" class="h-full bg-gradient-to-r from-pink-400 via-amber-300 to-emerald-400 transition-all duration-500" style="width: 0%;"></div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="flavors-grid">
+                    <button onclick="toggleFlavor(this, 'Fraise Tagada Douce')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-pink-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">🍓</span>
+                        <span>Fraise Tagada Douce</span>
+                    </button>
+                    <button onclick="toggleFlavor(this, 'Citron Pik Qui Pique')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-amber-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">🍋</span>
+                        <span>Citron Pik Qui Pique</span>
+                    </button>
+                    <button onclick="toggleFlavor(this, 'Pomme Verte Acidulée')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-emerald-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">🍏</span>
+                        <span>Pomme Verte Acidulée</span>
+                    </button>
+                    <button onclick="toggleFlavor(this, 'Bouteilles Cola Fizz')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-orange-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">🥤</span>
+                        <span>Bouteilles Cola Fizz</span>
+                    </button>
+                    <button onclick="toggleFlavor(this, 'Guimauve Vanille Rose')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-purple-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">☁️</span>
+                        <span>Guimauve Vanille Rose</span>
+                    </button>
+                    <button onclick="toggleFlavor(this, 'Tranches Pastèque Sucrées')" class="flavor-btn jelly-active p-3.5 rounded-2xl bg-white border-2 border-slate-800 font-bold text-sm flex items-center gap-2.5 hover:bg-rose-50 transition-all cursor-pointer text-left">
+                        <span class="text-2xl">🍉</span>
+                        <span>Tranches Pastèque</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Récapitulatif et ajout au panier -->
+            <div class="p-6 bg-white rounded-2xl border-2 border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[4px_4px_0px_#1e293b]">
+                <div>
+                    <span class="text-xs uppercase tracking-widest text-slate-500 font-bold block">Ton mélange personnalisé</span>
+                    <div class="font-display font-extrabold text-3xl sm:text-4xl text-slate-900">
+                        <span id="custom-bag-price">6,50</span> €
+                    </div>
+                    <p id="selected-flavors-summary" class="text-xs font-semibold text-slate-600 mt-1">Aucun parfum sélectionné pour le moment</p>
+                </div>
+                <button onclick="addCustomBagToCart(event)" class="jelly-hover w-full sm:w-auto px-7 py-4 bg-[#A7F3D0] text-slate-900 font-display font-extrabold uppercase rounded-xl border-2 border-slate-800 shadow-[4px_4px_0px_#1e293b] hover:bg-emerald-300 transition-all cursor-pointer">
+                    Ajouter mon sachet au panier ✓
+                </button>
+            </div>
+            <p id="bag-feedback" class="hidden mt-4 text-center font-extrabold text-sm text-pink-600"></p>
+        </div>
+    </section>
+
+    <!-- SECTION AVIS CLIENTS GOURMANDS -->
+    <section id="avis" class="py-16 px-6 max-w-7xl mx-auto reveal-on-scroll">
+        <h2 class="font-display font-extrabold text-3xl sm:text-5xl uppercase tracking-tighter mb-10 text-slate-900">
+            ILS ONT <span class="bg-[#FDE68A] px-2 border-2 border-slate-800 rounded-xl">CRAQUÉ</span> ★★★★★
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/90 border-2 border-slate-800 rounded-3xl p-6 shadow-[5px_5px_0px_#1e293b]">
+                <div class="text-amber-400 text-lg mb-2">★★★★★</div>
+                <p class="font-medium text-slate-700 mb-4">"Les oursons pétillants sont incroyables ! Le packaging pastel est trop beau et les bonbons sont ultra frais."</p>
+                <div class="font-extrabold text-xs uppercase text-slate-900">— Camille L. • Paris</div>
+            </div>
+            <div class="bg-white/90 border-2 border-slate-800 rounded-3xl p-6 shadow-[5px_5px_0px_#1e293b]">
+                <div class="text-amber-400 text-lg mb-2">★★★★★</div>
+                <p class="font-medium text-slate-700 mb-4">"J'ai composé un sachet 1kg pour une soirée entre amis, tout a disparu en 20 minutes. Les rubans citron-framboise sont dingues."</p>
+                <div class="font-extrabold text-xs uppercase text-slate-900">— Lucas M. • Lyon</div>
+            </div>
+            <div class="bg-white/90 border-2 border-slate-800 rounded-3xl p-6 shadow-[5px_5px_0px_#1e293b]">
+                <div class="text-amber-400 text-lg mb-2">★★★★★</div>
+                <p class="font-medium text-slate-700 mb-4">"Enfin des guimauves qui ont un vrai goût de fraise et de vanille sans être écœurantes. Livraison super rapide !"</p>
+                <div class="font-extrabold text-xs uppercase text-slate-900">— Sarah K. • Bordeaux</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER NEO-BRUTALIST PASTEL -->
+    <footer class="py-10 px-6 border-t-2 border-slate-800 bg-white/85 mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="font-display font-extrabold text-xl uppercase flex items-center gap-2">
+                <span>🍬</span> BONBON<span class="text-pink-500">.BOLD</span>
+            </div>
+            <p class="font-bold text-xs sm:text-sm text-slate-700 text-center">
+                © 2026 BONBON.BOLD — Confiserie Artisanale & Pastel. Livraison offerte dès 30 € d'achat.
+            </p>
+            <div class="flex gap-3 font-extrabold text-xs uppercase">
+                <a href="#boutique" class="hover:text-pink-500">Boutique</a>
+                <span>•</span>
+                <a href="#sachet-perso" class="hover:text-indigo-500">Mix</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- TIROIR LATÉRAL PANIER (CART DRAWER) -->
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden opacity-0 transition-opacity duration-300"></div>
+    <aside id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#FDF2F8] border-l-2 border-slate-800 z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-[-8px_0px_0px_#1e293b]">
+        <!-- En-tête du panier -->
+        <div class="p-6 bg-white border-b-2 border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🛍️</span>
+                <h3 class="font-display font-extrabold text-2xl uppercase text-slate-900">Ton Panier Sucré</h3>
+            </div>
+            <button onclick="toggleCart()" class="w-10 h-10 rounded-full bg-[#FBCFE8] border-2 border-slate-800 font-extrabold text-lg flex items-center justify-center hover:rotate-90 transition-transform cursor-pointer">
+                ✕
+            </button>
+        </div>
+
+        <!-- Barre de progression livraison offerte -->
+        <div class="p-4 bg-[#FEF3C7] border-b-2 border-slate-800">
+            <p id="free-shipping-text" class="text-xs font-extrabold uppercase text-slate-900 mb-2">
+                Plus que <span class="text-pink-600">30,00 €</span> pour la livraison offerte ! 🚚
+            </p>
+            <div class="w-full h-3 bg-white border-2 border-slate-800 rounded-full overflow-hidden">
+                <div id="free-shipping-bar" class="h-full bg-emerald-400 transition-all duration-500" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- Liste des articles du panier -->
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- Rempli dynamiquement -->
+        </div>
+
+        <!-- Pied du panier -->
+        <div class="p-6 bg-white border-t-2 border-slate-800">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold uppercase text-xs tracking-wider text-slate-600">Total TTC</span>
+                <span id="cart-total-price" class="font-display font-extrabold text-3xl text-slate-900">0,00 €</span>
+            </div>
+            <button id="checkout-btn" onclick="checkoutOrder(event)" class="jelly-hover w-full py-4 bg-[#A7F3D0] disabled:opacity-50 disabled:pointer-events-none text-slate-900 font-display font-extrabold text-lg uppercase rounded-2xl border-2 border-slate-800 shadow-[4px_4px_0px_#1e293b] hover:bg-emerald-300 transition-all cursor-pointer">
+                Commander mes douceurs →
+            </button>
+        </div>
+    </aside>
+
+    <!-- MODALE DE CONFIRMATION DE COMMANDE -->
+    <div id="order-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-2 border-slate-800 rounded-3xl p-8 max-w-md w-full text-center shadow-[8px_8px_0px_#1e293b] transform scale-95 transition-transform">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-[#FDE68A] border-2 border-slate-800 flex items-center justify-center text-4xl animate-bounce">
+                🎉
+            </div>
+            <h3 class="font-display font-extrabold text-3xl uppercase text-slate-900 mb-2">Commande Validée !</h3>
+            <p class="text-slate-700 font-medium mb-6">
+                Merci pour ta gourmandise ! Nos confiseurs préparent ton colis pastel avec une petite surprise sucrée en cadeau.
+            </p>
+            <button onclick="closeOrderModal()" class="w-full py-3.5 bg-[#FBCFE8] border-2 border-slate-800 rounded-xl font-display font-extrabold uppercase shadow-[4px_4px_0px_#1e293b] hover:bg-pink-300 transition-all cursor-pointer">
+                Super, merci ! 🍬
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. TRANSFORMATION DU GRAND TITRE EN LETTRES INTERACTIVES (WAVY LETTERS)
+        // ==========================================
+        const titleEl = document.getElementById('interactive-title');
+        if (titleEl) {
+            const lines = titleEl.innerText.split('\n');
+            titleEl.innerHTML = lines.map((line, idx) => {
+                const letters = line.trim().split('').map(char => {
+                    if (char === ' ') return ' ';
+                    return `<span class="wavy-letter">${char}</span>`;
+                }).join('');
+                // Conserve "DOUCEURS" sur une seule ligne sans coupure
+                if (idx === 1) {
+                    return `<span class="whitespace-nowrap inline-block">${letters}</span>`;
+                }
+                return letters;
+            }).join('<br>');
+        }
+
+        // ==========================================
+        // 2. PARALLAXE DOUCE DES FORMES PASTEL & CONFETTIS SUCRÉS
+        // ==========================================
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 35;
+            const y = (e.clientY / window.innerHeight - 0.5) * 35;
+            
+            const s1 = document.getElementById('shape-1');
+            const s2 = document.getElementById('shape-2');
+            const s4 = document.getElementById('shape-4');
+            if (s1) {
+                s1.style.marginLeft = `${x}px`;
+                s1.style.marginTop = `${y}px`;
+            }
+            if (s2) {
+                s2.style.marginRight = `${-x}px`;
+                s2.style.marginTop = `${-y}px`;
+            }
+            if (s4) {
+                s4.style.transform = `translate(${x * 0.6}px, ${y * 0.6}px)`;
+            }
+        });
+
+        function spawnCandyConfetti(originX, originY, count = 20) {
+            const colors = ['#FBCFE8', '#FDE68A', '#A7F3D0', '#DDD6FE', '#F472B6', '#818CF8'];
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'candy-confetti';
+                const size = Math.floor(Math.random() * 10) + 7;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.borderRadius = Math.random() > 0.5 ? '9999px' : '4px';
+                particle.style.left = `${originX}px`;
+                particle.style.top = `${originY}px`;
+                document.body.appendChild(particle);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 60 + Math.random() * 130;
+                const destX = Math.cos(angle) * velocity;
+                const destY = Math.sin(angle) * velocity - 40;
+                const rotate = (Math.random() - 0.5) * 540;
+
+                requestAnimationFrame(() => {
+                    particle.style.transform = `translate(${destX}px, ${destY}px) rotate(${rotate}deg) scale(0.4)`;
+                    particle.style.opacity = '0';
+                });
+
+                setTimeout(() => particle.remove(), 900);
+            }
+        }
+
+        // ==========================================
+        // 3. VRAIES PHOTOGRAPHIES HD SUR-MESURE PAR CONFISERIE
+        // ==========================================
+        function getCandyMedia(product, isThumb = false) {
+            const imgClass = isThumb
+                ? "w-full h-full object-cover"
+                : "w-full h-full object-cover group-hover:scale-110 transition-transform duration-500";
+            return `<img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.onerror=null;this.src='${product.fallbackImage}';" class="${imgClass}">`;
+        }
+
+        // ==========================================
+        // 3B. DONNÉES DU CATALOGUE DE BONBONS (VRAIES PHOTOS HD FIDÈLES)
+        // ==========================================
+        const products = [
+            {
+                id: 1,
+                name: "Oursons Acidulés Mix",
+                category: "acidule",
+                badge: "Best-Seller ⚡",
+                badgeBg: "bg-[#FDE68A]",
+                cardBg: "bg-[#FEF3C7]",
+                weight: "200g",
+                price: 5.90,
+                image: "https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=800&q=85",
+                fallbackImage: "https://placehold.co/800x600/FEF3C7/1e293b?text=Oursons+Acidules",
+                desc: "Véritables oursons en gélatine translucide fruitée recouverts de fins cristaux de sucre acidulé."
+            },
+            {
+                id: 2,
+                name: "Nuages Guimauve Fraise",
+                category: "guimauve",
+                badge: "Ultra Doux ☁️",
+                badgeBg: "bg-[#FBCFE8]",
+                cardBg: "bg-[#FCE7F3]",
+                weight: "180g",
+                price: 6.40,
+                image: "https://images.pexels.com/photos/5469207/pexels-photo-5469207.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/FCE7F3/1e293b?text=Nuages+Guimauve+Fraise",
+                desc: "Guimauves moelleuses rose pastel et blanc vanille, texture nuage fondante et légèrement sucrée."
+            },
+            {
+                id: 3,
+                name: "Rubans Piquants Arc-en-Ciel",
+                category: "acidule",
+                badge: "Mega Pik ⚡",
+                badgeBg: "bg-[#A7F3D0]",
+                cardBg: "bg-[#D1FAE5]",
+                weight: "250g",
+                price: 5.50,
+                image: "https://images.pexels.com/photos/7110203/pexels-photo-7110203.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/D1FAE5/1e293b?text=Rubans+Piquants+Arc-en-Ciel",
+                desc: "Langues et rubans acidulés multicolores arc-en-ciel enrobés de sucre piquant pétillant."
+            },
+            {
+                id: 4,
+                name: "Perles Fruitées Croquantes",
+                category: "fruite",
+                badge: "Création 🌸",
+                badgeBg: "bg-[#DDD6FE]",
+                cardBg: "bg-[#EDE9FE]",
+                weight: "200g",
+                price: 6.90,
+                image: "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&w=800&q=85",
+                fallbackImage: "https://placehold.co/800x600/EDE9FE/1e293b?text=Perles+Fruitees",
+                desc: "Billes et dragées laquées multicolores pastel au cœur fruité croquant et satiné."
+            },
+            {
+                id: 5,
+                name: "Sucette Tourbillon Pastel",
+                category: "acidule",
+                badge: "Artisanal 🍭",
+                badgeBg: "bg-[#FDE68A]",
+                cardBg: "bg-[#FEF3C7]",
+                weight: "150g",
+                price: 5.20,
+                image: "https://images.pexels.com/photos/35783753/pexels-photo-35783753.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/FEF3C7/1e293b?text=Sucette+Tourbillon",
+                desc: "Grandes sucettes rondes en spirale tourbillonnante aux parfums fruités et sucre cuit brillant."
+            },
+            {
+                id: 6,
+                name: "Tresses Guimauve Vanille",
+                category: "guimauve",
+                badge: "Fondant 🍥",
+                badgeBg: "bg-[#FBCFE8]",
+                cardBg: "bg-[#FCE7F3]",
+                weight: "200g",
+                price: 6.20,
+                image: "https://images.pexels.com/photos/2808802/pexels-photo-2808802.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/FCE7F3/1e293b?text=Tresses+Guimauve+Vanille",
+                desc: "Guimauves torsadées pastel aux notes douces de vanille et fraise ultra aériennes."
+            },
+            {
+                id: 7,
+                name: "Cœurs Tendres Framboise",
+                category: "fruite",
+                badge: "100% Jus ❤️",
+                badgeBg: "bg-[#A7F3D0]",
+                cardBg: "bg-[#D1FAE5]",
+                weight: "220g",
+                price: 5.80,
+                image: "https://images.pexels.com/photos/5469263/pexels-photo-5469263.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/D1FAE5/1e293b?text=Coeurs+Tendres+Framboise",
+                desc: "Cœurs sucrés fondants parfumés à la framboise et enrobés de fins cristaux de sucre."
+            },
+            {
+                id: 8,
+                name: "La Box Découverte XXL",
+                category: "coffret",
+                badge: "Cadeau 🎁",
+                badgeBg: "bg-[#DDD6FE]",
+                cardBg: "bg-[#EDE9FE]",
+                weight: "850g",
+                price: 24.90,
+                image: "https://images.pexels.com/photos/18180778/pexels-photo-18180778.jpeg?auto=compress&cs=tinysrgb&w=800",
+                fallbackImage: "https://placehold.co/800x600/EDE9FE/1e293b?text=Box+Decouverte+XXL",
+                desc: "Coffret cadeau gourmand rempli d'un assortiment généreux de nos meilleures confiseries pastel."
+            }
+        ];
+
+        // Injection immédiate de la vraie photo dans la carte Nouveauté du Hero
+        const heroNoveltyThumb = document.getElementById('hero-novelty-thumb');
+        if (heroNoveltyThumb) {
+            heroNoveltyThumb.classList.remove('p-0.5');
+            heroNoveltyThumb.innerHTML = getCandyMedia(products[0], true);
+        }
+
+        let currentFilter = 'all';
+
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            const filtered = currentFilter === 'all' 
+                ? products 
+                : products.filter(p => p.category === currentFilter);
+
+            grid.innerHTML = filtered.map(product => `
+                <article class="jelly-hover group bg-white/95 border-2 border-slate-800 rounded-3xl overflow-hidden shadow-[6px_6px_0px_#1e293b] flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5">
+                    <div>
+                        <!-- Photographie HD Réelle de la Confiserie -->
+                        <div class="relative h-52 ${product.cardBg} border-b-2 border-slate-800 overflow-hidden">
+                            <span class="absolute top-3 left-3 z-10 text-[11px] font-extrabold uppercase px-2.5 py-1 ${product.badgeBg} border-2 border-slate-800 rounded-full shadow-[2px_2px_0px_#1e293b]">
+                                ${product.badge}
+                            </span>
+                            <span class="absolute top-3 right-3 z-10 text-[11px] font-extrabold px-2 py-0.5 bg-white/95 border-2 border-slate-800 rounded-md shadow-[2px_2px_0px_#1e293b]">
+                                ${product.weight}
+                            </span>
+                            ${getCandyMedia(product, false)}
+                        </div>
+
+                        <div class="p-5">
+                            <h3 class="font-display font-extrabold text-xl uppercase leading-tight text-slate-900 mb-2">
+                                ${product.name}
+                            </h3>
+                            <p class="text-xs font-medium text-slate-600 leading-relaxed">
+                                ${product.desc}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="px-5 pb-5 pt-2 flex items-center justify-between gap-2">
+                        <span class="font-display font-extrabold text-2xl text-slate-900">
+                            ${product.price.toFixed(2).replace('.', ',')} €
+                        </span>
+                        <button onclick="addToCart(${product.id}, event)" class="jelly-active px-4 py-2.5 bg-[#FBCFE8] hover:bg-pink-300 border-2 border-slate-800 rounded-xl font-display font-extrabold text-xs uppercase shadow-[3px_3px_0px_#1e293b] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer">
+                            + Ajouter
+                        </button>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function setFilter(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === category) {
+                    btn.classList.add('bg-slate-900', 'text-white');
+                    btn.classList.remove('bg-white');
+                } else {
+                    btn.classList.remove('bg-slate-900', 'text-white');
+                    btn.classList.add('bg-white');
+                }
+            });
+            renderProducts();
+        }
+
+        function filterAndScroll(category) {
+            setFilter(category);
+            document.getElementById('boutique').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ==========================================
+        // 4. ATELIER SACHET SUR-MESURE (MIX & MATCH)
+        // ==========================================
+        let bagState = {
+            sizeName: 'Petit Sachet (250g)',
+            price: 6.50,
+            maxFlavors: 3,
+            selectedFlavors: []
+        };
+
+        function selectBagSize(btn, sizeName, price, maxFlavors) {
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('selected', 'bg-[#FBCFE8]');
+                b.classList.add('bg-white');
+            });
+            btn.classList.add('selected', 'bg-[#FBCFE8]');
+            btn.classList.remove('bg-white');
+
+            bagState.sizeName = sizeName;
+            bagState.price = price;
+            bagState.maxFlavors = maxFlavors;
+
+            // Si l'utilisateur avait choisi plus de parfums que la nouvelle limite, on ajuste
+            while (bagState.selectedFlavors.length > maxFlavors) {
+                const removed = bagState.selectedFlavors.pop();
+                document.querySelectorAll('.flavor-btn').forEach(fb => {
+                    if (fb.textContent.includes(removed)) {
+                        fb.classList.remove('bg-[#FDE68A]', 'selected');
+                        fb.classList.add('bg-white');
+                    }
+                });
+            }
+
+            updateBagUI();
+        }
+
+        function toggleFlavor(btn, flavorName) {
+            const index = bagState.selectedFlavors.indexOf(flavorName);
+            const feedback = document.getElementById('bag-feedback');
+            feedback.classList.add('hidden');
+
+            if (index > -1) {
+                bagState.selectedFlavors.splice(index, 1);
+                btn.classList.remove('bg-[#FDE68A]', 'selected');
+                btn.classList.add('bg-white');
+            } else {
+                if (bagState.selectedFlavors.length >= bagState.maxFlavors) {
+                    feedback.textContent = `⚠️ Maximum ${bagState.maxFlavors} parfums pour le ${bagState.sizeName}. Passe au format supérieur pour plus de saveurs !`;
+                    feedback.classList.remove('hidden');
+                    return;
+                }
+                bagState.selectedFlavors.push(flavorName);
+                btn.classList.add('bg-[#FDE68A]', 'selected');
+                btn.classList.remove('bg-white');
+            }
+
+            updateBagUI();
+        }
+
+        function updateBagUI() {
+            const count = bagState.selectedFlavors.length;
+            const max = bagState.maxFlavors;
+            const pct = Math.min(100, Math.round((count / max) * 100));
+
+            document.getElementById('max-flavors-label').textContent = max;
+            document.getElementById('bag-fill-text').textContent = `${count} / ${max} choisis`;
+            document.getElementById('bag-fill-bar').style.width = `${pct}%`;
+            document.getElementById('custom-bag-price').textContent = bagState.price.toFixed(2).replace('.', ',');
+
+            const summaryEl = document.getElementById('selected-flavors-summary');
+            if (count === 0) {
+                summaryEl.textContent = 'Aucun parfum sélectionné pour le moment';
+            } else {
+                summaryEl.textContent = `Parfums : ${bagState.selectedFlavors.join(' • ')}`;
+            }
+        }
+
+        function addCustomBagToCart(event) {
+            const feedback = document.getElementById('bag-feedback');
+            if (bagState.selectedFlavors.length === 0) {
+                feedback.textContent = '🍬 Choisis au moins 1 parfum avant d’ajouter ton sachet au panier !';
+                feedback.classList.remove('hidden');
+                return;
+            }
+            feedback.classList.add('hidden');
+
+            const customId = 'custom-' + Date.now();
+            cart.push({
+                id: customId,
+                productId: 8,
+                name: `Mix ${bagState.sizeName}`,
+                subtitle: bagState.selectedFlavors.join(', '),
+                price: bagState.price,
+                qty: 1
+            });
+
+            if (event) spawnCandyConfetti(event.clientX, event.clientY, 24);
+            updateCartUI(true);
+            toggleCart(true);
+        }
+
+        // ==========================================
+        // 5. GESTION DU PANIER & COMMANDE
+        // ==========================================
+        let cart = [];
+        const FREE_SHIPPING_THRESHOLD = 30.00;
+
+        function addToCart(productId, event) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    productId: product.id,
+                    name: product.name,
+                    subtitle: product.weight,
+                    price: product.price,
+                    qty: 1
+                });
+            }
+
+            if (event) {
+                spawnCandyConfetti(event.clientX, event.clientY, 18);
+            }
+            updateCartUI(true);
+        }
+
+        function quickAddById(productId) {
+            const btn = document.getElementById('cart-btn');
+            const rect = btn.getBoundingClientRect();
+            addToCart(productId, { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+        }
+
+        function changeQty(id, delta) {
+            const idx = cart.findIndex(item => String(item.id) === String(id));
+            if (idx === -1) return;
+
+            cart[idx].qty += delta;
+            if (cart[idx].qty <= 0) {
+                cart.splice(idx, 1);
+            }
+            updateCartUI(false);
+        }
+
+        function updateCartUI(animateBadge = false) {
+            const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
+            const totalPrice = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+
+            const countEl = document.getElementById('cart-count');
+            countEl.textContent = totalItems;
+
+            if (animateBadge) {
+                const cartBtn = document.getElementById('cart-btn');
+                cartBtn.classList.remove('animate-cart-pop');
+                void cartBtn.offsetWidth; // trigger reflow
+                cartBtn.classList.add('animate-cart-pop');
+            }
+
+            // Mise à jour barre de livraison gratuite
+            const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - totalPrice);
+            const progressPct = Math.min(100, (totalPrice / FREE_SHIPPING_THRESHOLD) * 100);
+            document.getElementById('free-shipping-bar').style.width = `${progressPct}%`;
+
+            const shippingText = document.getElementById('free-shipping-text');
+            if (remaining === 0) {
+                shippingText.innerHTML = '🎉 Bravo ! Tu bénéficies de la <span class="text-emerald-700 underline">livraison offerte</span> !';
+            } else {
+                shippingText.innerHTML = `Plus que <span class="text-pink-600">${remaining.toFixed(2).replace('.', ',')} €</span> pour la livraison offerte ! 🚚`;
+            }
+
+            // Rendu des articles
+            const container = document.getElementById('cart-items-container');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            if (cart.length === 0) {
+                checkoutBtn.disabled = true;
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center py-12">
+                        <div class="text-6xl mb-4 animate-bounce">🍭</div>
+                        <p class="font-display font-extrabold text-xl uppercase text-slate-800 mb-2">Ton panier est tout vide</p>
+                        <p class="text-sm font-medium text-slate-600 max-w-xs">Ajoute des bonbons acidulés, des guimauves ou compose ton propre sachet sur-mesure !</p>
+                    </div>
+                `;
+            } else {
+                checkoutBtn.disabled = false;
+                container.innerHTML = cart.map(item => {
+                    const matchedProduct = products.find(p => p.id === (item.productId || 8)) || products[7];
+                    return `
+                    <div class="bg-white border-2 border-slate-800 rounded-2xl p-4 shadow-[4px_4px_0px_#1e293b] flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-14 h-14 shrink-0 rounded-xl bg-[#FCE7F3] border-2 border-slate-800 overflow-hidden">
+                                ${getCandyMedia(matchedProduct, true)}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-display font-extrabold text-sm uppercase text-slate-900 truncate">${item.name}</h4>
+                                <p class="text-[11px] font-semibold text-slate-500 truncate">${item.subtitle}</p>
+                                <div class="font-extrabold text-sm text-indigo-600 mt-0.5">
+                                    ${(item.price * item.qty).toFixed(2).replace('.', ',')} €
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#FBCFE8] border-2 border-slate-800 font-extrabold text-sm flex items-center justify-center cursor-pointer">-</button>
+                            <span class="w-6 text-center font-extrabold text-sm">${item.qty}</span>
+                            <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-[#A7F3D0] border-2 border-slate-800 font-extrabold text-sm flex items-center justify-center cursor-pointer">+</button>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+
+            document.getElementById('cart-total-price').textContent = `${totalPrice.toFixed(2).replace('.', ',')} €`;
+        }
+
+        function toggleCart(forceOpen = null) {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            const isClosed = drawer.classList.contains('translate-x-full');
+            const shouldOpen = forceOpen !== null ? forceOpen : isClosed;
+
+            if (shouldOpen) {
+                overlay.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    overlay.classList.remove('opacity-0');
+                    drawer.classList.remove('translate-x-full');
+                });
+            } else {
+                overlay.classList.add('opacity-0');
+                drawer.classList.add('translate-x-full');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function checkoutOrder(event) {
+            if (cart.length === 0) return;
+            if (event) spawnCandyConfetti(window.innerWidth / 2, window.innerHeight / 2, 40);
+            cart = [];
+            updateCartUI(false);
+            toggleCart(false);
+
+            const modal = document.getElementById('order-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeOrderModal() {
+            const modal = document.getElementById('order-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ==========================================
+        // 5B. MENU MOBILE RESPONSIVE
+        // ==========================================
+        function toggleMobileMenu(forceState = null) {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('mobile-menu-icon');
+            if (!menu || !icon) return;
+
+            const isHidden = menu.classList.contains('hidden');
+            const shouldOpen = forceState !== null ? forceState : isHidden;
+
+            if (shouldOpen) {
+                menu.classList.remove('hidden');
+                icon.textContent = '✕';
+            } else {
+                menu.classList.add('hidden');
+                icon.textContent = '☰';
+            }
+        }
+
+        // ==========================================
+        // 6. APPARITION FLUIDE DES SECTIONS AU SCROLL
+        // ==========================================
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal-on-scroll').forEach(section => {
+            revealObserver.observe(section);
+        });
+
+        // Initialisation au chargement
+        renderProducts();
+        updateCartUI(false);
+    </script>
+</body>
+</html>

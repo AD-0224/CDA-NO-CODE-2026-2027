@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHŌNEN CHRONICLE 90–2026 — Le Blog Manga Rétro d'Aïda Dahdouh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Shippori+Mincho:wght@700;800&family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        jp: ['Dela Gothic One', 'cursive'],
+                        serifjp: ['Shippori Mincho', 'serif'],
+                        mono: ['Space Grotesk', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 1. PAPIER MANGA & TRAMES D'ENCRE ANIMÉES */
+        @keyframes bgShift {
+            0% { background-position: 0 0; }
+            100% { background-position: 32px 32px; }
+        }
+        body {
+            background-color: #F4EFE6;
+            background-image: radial-gradient(#18181B 0.85px, transparent 0.85px);
+            background-size: 16px 16px;
+            animation: bgShift 4s linear infinite;
+        }
+
+        /* 2. CASES DE MANGA AVEC EFFET D'IMPACT AU SURVOL */
+        .manga-panel {
+            background-color: #FFFDF9;
+            border: 3px solid #18181B;
+            box-shadow: 6px 6px 0px #18181B;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            position: relative;
+        }
+        .manga-panel:hover {
+            transform: translate(-4px, -4px) rotate(-0.5deg);
+            box-shadow: 11px 11px 0px #E11D48;
+        }
+
+        .hanko-stamp {
+            opacity: 0;
+            transform: scale(2.5) rotate(25deg);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .manga-panel:hover .hanko-stamp {
+            opacity: 1;
+            transform: scale(1) rotate(-12deg);
+        }
+
+        .halftone-red {
+            background-color: #E11D48;
+            background-image: radial-gradient(rgba(24, 24, 27, 0.28) 1.5px, transparent 1.5px);
+            background-size: 8px 8px;
+        }
+
+        /* 3. RAYONS DE VITESSE MANGA */
+        @keyframes spinRays {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .manga-rays {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(24, 24, 27, 0.08) 0deg 8deg,
+                transparent 8deg 18deg
+            );
+            animation: spinRays 25s linear infinite;
+        }
+
+        /* 4. ONOMATOPÉES QUI TREMBLENT */
+        @keyframes mangaShake {
+            0%, 100% { transform: translate(0, 0) rotate(-3deg); }
+            25% { transform: translate(-2px, 2px) rotate(-1deg); }
+            50% { transform: translate(2px, -2px) rotate(-5deg); }
+            75% { transform: translate(-1px, -2px) rotate(-2deg); }
+        }
+        .sfx-rumble {
+            display: inline-block;
+            animation: mangaShake 0.4s infinite;
+        }
+
+        /* 5. HÉROS QUI FLOTTE & DANSE */
+        @keyframes floatHero {
+            0%, 100% { transform: translateY(0px) rotate(-2deg); }
+            50% { transform: translateY(-12px) rotate(2deg); }
+        }
+        @keyframes danceBeat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-16px) scale(1.06) rotate(3deg); }
+        }
+        .float-hero { animation: floatHero 3.5s ease-in-out infinite; }
+        .music-dancing { animation: danceBeat 0.35s ease-in-out infinite !important; }
+
+        /* 6. BULLE D'IMPACT MANGA AU CLIC */
+        @keyframes actionPop {
+            0% { transform: translate(-50%, -50%) scale(0.3) rotate(-15deg); opacity: 1; }
+            50% { transform: translate(-50%, -80%) scale(1.2) rotate(8deg); opacity: 1; }
+            100% { transform: translate(-50%, -120%) scale(0.9) rotate(0deg); opacity: 0; }
+        }
+        .click-sfx {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-family: 'Dela Gothic One', cursive;
+            background: #FACC15;
+            color: #18181B;
+            border: 3px solid #18181B;
+            padding: 4px 12px;
+            box-shadow: 4px 4px 0px #E11D48;
+            font-size: 16px;
+            animation: actionPop 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* 7. ÉGALISEUR MUSIQUE RÉTRO */
+        @keyframes eqBar {
+            0%, 100% { height: 4px; }
+            50% { height: 18px; }
+        }
+        .eq-playing .bar-1 { animation: eqBar 0.45s ease-in-out infinite; }
+        .eq-playing .bar-2 { animation: eqBar 0.35s ease-in-out infinite 0.15s; }
+        .eq-playing .bar-3 { animation: eqBar 0.55s ease-in-out infinite 0.25s; }
+        .eq-playing .bar-4 { animation: eqBar 0.4s ease-in-out infinite 0.1s; }
+
+        .reveal-panel {
+            opacity: 0;
+            transform: translateY(35px) scale(0.96);
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-panel.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 16s linear infinite;
+        }
+
+        .vertical-jp {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+        }
+    </style>
+</head>
+<body class="text-[#18181B] font-sans antialiased overflow-x-hidden selection:bg-[#E11D48] selection:text-white">
+
+    <!-- EN-TÊTE MAGAZINE MANGA + LECTEUR MUSIQUE RÉTRO -->
+    <header class="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b-4 border-[#18181B]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            
+            <a href="#" class="group flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#E11D48] border-2 border-[#18181B] flex items-center justify-center font-serifjp font-extrabold text-xl text-white shadow-[2px_2px_0px_#18181B] group-hover:rotate-12 transition-transform">
+                    週刊
+                </div>
+                <div>
+                    <span class="font-jp text-lg sm:text-xl tracking-tight block leading-none">SHŌNEN <span class="text-[#E11D48]">CHRONICLE</span></span>
+                    <span class="font-mono text-[11px] font-bold uppercase tracking-widest text-zinc-600">Le Blog Manga d'Aïda Dahdouh</span>
+                </div>
+            </a>
+
+            <nav class="hidden lg:flex items-center space-x-6 font-mono font-bold text-xs uppercase tracking-wider">
+                <a href="#une" class="hover:text-[#E11D48] hover:-translate-y-0.5 transition-all">★ À la Une</a>
+                <a href="#articles" class="hover:text-[#E11D48] hover:-translate-y-0.5 transition-all">📖 Dossiers Personnages</a>
+                <a href="#ecrire" class="hover:text-[#E11D48] hover:-translate-y-0.5 transition-all">✍️ Écrire / Modifier</a>
+            </nav>
+
+            <!-- LECTEUR AUDIO RÉTRO 8-BIT -->
+            <div class="flex items-center gap-3 bg-[#18181B] text-white px-3.5 py-2 rounded-xl border-2 border-[#18181B] shadow-[3px_3px_0px_#E11D48]">
+                <button type="button" id="music-btn" onclick="toggleRetroMusic()" class="w-8 h-8 rounded-lg bg-[#E11D48] hover:bg-amber-400 hover:text-[#18181B] flex items-center justify-center font-bold text-sm transition-transform hover:scale-110" title="Lancer / Couper la musique rétro">
+                    ▶
+                </button>
+                <div class="text-left">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono text-[11px] font-bold text-amber-300 uppercase">OST Rétro 90s</span>
+                        <div id="eq-bars" class="flex items-end gap-0.5 h-4">
+                            <span class="bar-1 w-1 h-1 bg-rose-400 block"></span>
+                            <span class="bar-2 w-1 h-2 bg-amber-300 block"></span>
+                            <span class="bar-3 w-1 h-1 bg-rose-400 block"></span>
+                            <span class="bar-4 w-1 h-1 bg-amber-300 block"></span>
+                        </div>
+                    </div>
+                    <p id="music-status" class="text-[10px] text-zinc-400 leading-none mt-0.5">Cliquez sur ▶ pour le son</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- COUVERTURE DU MAGAZINE (HERO SECTION) -->
+    <section id="une" class="pt-10 pb-10 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="lg:col-span-8 manga-panel p-6 sm:p-10 relative overflow-hidden flex flex-col justify-between">
+                <span class="sfx-rumble absolute top-4 right-5 font-serifjp font-extrabold text-2xl text-[#E11D48]/30 select-none pointer-events-none">
+                    ゴゴゴゴ
+                </span>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+                    <span class="halftone-red text-white font-mono font-bold text-xs uppercase px-3 py-1 border-2 border-[#18181B]">
+                        NUMÉRO SPÉCIAL • 1990 — 2026
+                    </span>
+                    <span class="font-serifjp font-extrabold text-sm text-[#E11D48]">
+                        伝説のキャラクターたち (Les Héros Légendaires)
+                    </span>
+                </div>
+
+                <div class="my-4">
+                    <h1 class="font-jp text-4xl sm:text-6xl uppercase leading-[1.02] tracking-tight mb-5">
+                        LES HÉROS QUI ONT FAIT L'HISTOIRE DU <span class="bg-[#FACC15] px-2 border-2 border-[#18181B] inline-block -rotate-1 hover:rotate-2 hover:scale-105 transition-transform cursor-pointer">MANGA.</span>
+                    </h1>
+                    <p class="text-base sm:text-lg text-zinc-700 font-medium max-w-2xl leading-relaxed">
+                        De <strong>Son Goku</strong> à <strong>Luffy</strong>, en passant par <strong>Naruto</strong>, <strong>Light Yagami</strong> et <strong>Satoru Gojo</strong> : explorez, modifiez et enrichissez vos fiches personnages !
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 pt-4 border-t-2 border-dashed border-zinc-300">
+                    <a href="#articles" class="px-6 py-3 bg-[#18181B] text-white font-mono font-bold text-sm uppercase hover:bg-[#E11D48] hover:-translate-y-0.5 transition-all">
+                        Lire les dossiers ↓
+                    </a>
+                    <button type="button" onclick="toggleRetroMusic()" class="px-5 py-3 bg-[#FACC15] border-2 border-[#18181B] font-mono font-bold text-sm uppercase hover:bg-amber-300 hover:-translate-y-0.5 transition-all">
+                        🎵 Musique Rétro ON/OFF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Case Latérale : Fiche Personnage Vedette (4 colonnes) -->
+            <div class="lg:col-span-4 manga-panel bg-[#FACC15] p-6 flex flex-col justify-between relative overflow-hidden">
+                <div class="manga-rays absolute -inset-24 pointer-events-none"></div>
+
+                <div class="flex justify-between items-start relative z-10">
+                    <span class="bg-[#18181B] text-white font-mono text-xs font-bold px-2.5 py-1 uppercase">Personnage Vedette</span>
+                    <span class="vertical-jp font-serifjp font-extrabold text-lg text-[#18181B]/80">海賊王に俺はなる</span>
+                </div>
+
+                <div class="my-4 flex flex-col items-center justify-center relative z-10">
+                    <svg id="hero-mascot" class="w-44 h-44 float-hero drop-shadow-[5px_5px_0px_#18181B] cursor-pointer hover:scale-110 transition-transform" viewBox="0 0 200 200">
+                        <ellipse cx="100" cy="72" rx="75" ry="18" fill="#FDE047" stroke="#18181B" stroke-width="4"/>
+                        <path d="M55 70 Q100 20 145 70 Z" fill="#FDE047" stroke="#18181B" stroke-width="4"/>
+                        <rect x="56" y="60" width="88" height="10" fill="#E11D48" stroke="#18181B" stroke-width="3"/>
+                        <path d="M58 75 L48 95 L65 88 L72 102 L100 85 L128 102 L135 88 L152 95 L142 75 Z" fill="#18181B"/>
+                        <path d="M65 82 Q65 135 100 142 Q135 135 135 82 Z" fill="#FDE6D8" stroke="#18181B" stroke-width="4"/>
+                        <path d="M76 112 L86 112 M79 109 L79 115 M83 109 L83 115" stroke="#18181B" stroke-width="2"/>
+                        <circle cx="84" cy="100" r="6" fill="#18181B"/>
+                        <circle cx="82" cy="98" r="2" fill="#FFF"/>
+                        <circle cx="116" cy="100" r="6" fill="#18181B"/>
+                        <circle cx="114" cy="98" r="2" fill="#FFF"/>
+                        <path d="M78 118 Q100 138 122 118 Z" fill="#FFF" stroke="#18181B" stroke-width="3"/>
+                        <line x1="83" y1="124" x2="117" y2="124" stroke="#18181B" stroke-width="2"/>
+                    </svg>
+                    <div class="bg-white border-2 border-[#18181B] px-4 py-1.5 rounded-full font-jp text-xs uppercase mt-2 shadow-[2px_2px_0px_#18181B]">
+                        « Le Roi des Pirates, ce sera moi ! »
+                    </div>
+                </div>
+
+                <div class="bg-white/95 border-2 border-[#18181B] p-3 text-xs font-mono relative z-10">
+                    <div class="flex justify-between font-bold">
+                        <span>Série : ONE PIECE</span>
+                        <span class="text-[#E11D48]">Depuis 1997</span>
+                    </div>
+                    <p class="text-zinc-600 mt-1">Le symbole absolu de la liberté et de l'aventure dans le manga moderne.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BANDEAU DÉFILANT MANGA -->
+    <div class="py-3 bg-[#18181B] text-[#FACC15] border-y-4 border-[#18181B] overflow-hidden mb-8">
+        <div class="animate-marquee font-jp text-base sm:text-lg tracking-widest uppercase">
+            <span class="mx-6">★ SON GOKU (1990)</span>
+            <span class="mx-6 text-white">★ MONKEY D. LUFFY (1997)</span>
+            <span class="mx-6 text-rose-400">★ NARUTO UZUMAKI (1999)</span>
+            <span class="mx-6">★ LIGHT YAGAMI (2003)</span>
+            <span class="mx-6 text-white">★ TANJIRO KAMADO (2016)</span>
+            <span class="mx-6 text-rose-400">★ SATORU GOJO (2018)</span>
+            <span class="mx-6">★ SON GOKU (1990)</span>
+            <span class="mx-6 text-white">★ MONKEY D. LUFFY (1997)</span>
+            <span class="mx-6 text-rose-400">★ NARUTO UZUMAKI (1999)</span>
+            <span class="mx-6">★ LIGHT YAGAMI (2003)</span>
+        </div>
+    </div>
+
+    <!-- BARRE DE FILTRES DU BLOG -->
+    <section id="articles" class="py-4 px-4 sm:px-6 max-w-7xl mx-auto">
+        <div class="manga-panel bg-white p-5 mb-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono font-bold text-xs uppercase mr-2 text-zinc-500">Filtrer par ère :</span>
+                <button type="button" onclick="setFilter('all', this)" class="filter-btn px-4 py-2 bg-[#18181B] text-white font-mono font-bold text-xs uppercase transition-transform hover:scale-105">Tous les chapitres</button>
+                <button type="button" onclick="setFilter('1990', this)" class="filter-btn px-4 py-2 bg-[#F4EFE6] border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-[#FACC15] transition-transform hover:scale-105">Années 90</button>
+                <button type="button" onclick="setFilter('2000', this)" class="filter-btn px-4 py-2 bg-[#F4EFE6] border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-[#FACC15] transition-transform hover:scale-105">Années 2000</button>
+                <button type="button" onclick="setFilter('2010', this)" class="filter-btn px-4 py-2 bg-[#F4EFE6] border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-[#FACC15] transition-transform hover:scale-105">Années 2010</button>
+                <button type="button" onclick="setFilter('2020', this)" class="filter-btn px-4 py-2 bg-[#F4EFE6] border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-[#FACC15] transition-transform hover:scale-105">Années 2020</button>
+            </div>
+
+            <div class="w-full lg:w-72">
+                <input type="text" id="blog-search" placeholder="🔍 Rechercher Goku, Naruto, Gojo..." class="w-full px-4 py-2 bg-[#F4EFE6] border-2 border-[#18181B] font-mono text-xs font-bold focus:outline-none focus:bg-white">
+            </div>
+        </div>
+
+        <!-- GRILLE DES ARTICLES DU BLOG -->
+        <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </section>
+
+    <!-- SECTION UTILE : CRÉER OU MODIFIER UNE FICHE MANGA -->
+    <section id="ecrire" class="py-16 px-4 sm:px-6 max-w-4xl mx-auto">
+        <div class="manga-panel reveal-panel p-8 sm:p-10 bg-[#FFFDF9] relative">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div id="form-badge" class="inline-block bg-[#E11D48] text-white font-mono font-bold text-xs uppercase px-3 py-1 border-2 border-[#18181B]">
+                    Rédaction • Nouvel Article
+                </div>
+                <button type="button" id="cancel-edit-btn" onclick="cancelEdit()" class="hidden px-3 py-1 bg-zinc-200 border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-zinc-300">
+                    ✕ Annuler la modification
+                </button>
+            </div>
+
+            <h2 id="form-title" class="font-jp text-2xl sm:text-4xl uppercase mb-2">Publier une Fiche Personnage</h2>
+            <p class="text-sm text-zinc-600 font-medium mb-6">Créez une nouvelle fiche ou cliquez sur <strong>« ✏️ »</strong> sur n'importe quelle carte ci-dessus pour la modifier.</p>
+
+            <form id="new-post-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input type="hidden" id="edit-id" value="">
+                <input type="text" id="p-char" required placeholder="Personnage culte (ex: Levi Ackerman)" class="px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-bold focus:bg-white focus:outline-none">
+                <input type="text" id="p-manga" required placeholder="Manga (ex: L'Attaque des Titans)" class="px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-bold focus:bg-white focus:outline-none">
+                <input type="number" id="p-year" min="1980" max="2026" required placeholder="Année (ex: 2009)" class="px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-bold focus:bg-white focus:outline-none">
+                <input type="text" id="p-jp" placeholder="Titre japonais (optionnel, ex: 進撃の巨人)" class="px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-bold focus:bg-white focus:outline-none">
+                <input type="text" id="p-quote" required placeholder="Sa réplique culte..." class="sm:col-span-2 px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-bold focus:bg-white focus:outline-none">
+                <textarea id="p-content" rows="3" required placeholder="Votre analyse du personnage et pourquoi il a marqué l'histoire..." class="sm:col-span-2 px-4 py-3 bg-[#F4EFE6] border-2 border-[#18181B] text-sm font-medium focus:bg-white focus:outline-none"></textarea>
+                
+                <button type="submit" id="form-submit-btn" class="sm:col-span-2 py-4 bg-[#E11D48] hover:bg-[#18181B] text-white border-2 border-[#18181B] font-jp text-sm uppercase tracking-wider transition-colors shadow-[4px_4px_0px_#18181B]">
+                    Publier dans le Magazine ✒️
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- MODALE DE LECTURE D'ARTICLE COMPLET -->
+    <div id="article-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <div class="manga-panel bg-[#FFFDF9] max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative">
+            <div class="flex justify-between items-center border-b-2 border-[#18181B] pb-4 mb-5">
+                <span id="modal-badge" class="bg-[#FACC15] border-2 border-[#18181B] px-3 py-1 font-mono text-xs font-bold uppercase"></span>
+                <button type="button" onclick="closeArticle()" class="w-9 h-9 bg-[#18181B] text-white font-bold hover:bg-[#E11D48]">✕</button>
+            </div>
+            
+            <p id="modal-jp" class="font-serifjp text-sm font-bold text-[#E11D48] mb-1"></p>
+            <h2 id="modal-title" class="font-jp text-3xl uppercase mb-4"></h2>
+            
+            <blockquote id="modal-quote" class="p-4 bg-[#F4EFE6] border-l-4 border-[#E11D48] font-serifjp italic font-bold text-base mb-5"></blockquote>
+            
+            <p id="modal-body" class="text-zinc-800 leading-relaxed text-base mb-8"></p>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t-2 border-dashed border-zinc-300">
+                <button type="button" id="modal-like-btn" class="px-5 py-2.5 bg-[#E11D48] text-white border-2 border-[#18181B] font-mono font-bold text-xs uppercase shadow-[3px_3px_0px_#18181B] hover:scale-105 transition-transform">
+                    🔥 J'adore (<span id="modal-likes">0</span>)
+                </button>
+                <div class="flex gap-2">
+                    <button type="button" id="modal-edit-btn" class="px-4 py-2.5 bg-[#FACC15] text-[#18181B] border-2 border-[#18181B] font-mono font-bold text-xs uppercase hover:bg-amber-300">
+                        ✏️ Modifier cette fiche
+                    </button>
+                    <button type="button" onclick="closeArticle()" class="px-4 py-2.5 bg-[#18181B] text-white font-mono font-bold text-xs uppercase">
+                        Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-8 text-center font-mono font-bold text-xs border-t-4 border-[#18181B] bg-[#FFFDF9]">
+        <p>© 2026 SHŌNEN CHRONICLE — Le Blog Manga Rétro par Aïda Dahdouh. One-Page #1/4.</p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        let audioCtx = null;
+
+        // 1. PETITE BULLE D'IMPACT VISUELLE AU CLIC
+        const sfxWords = ["ドン!!", "POW!", "バン!", "ゴゴゴ", "ZAP!", "キラッ★"];
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const badge = document.createElement('div');
+            badge.className = 'click-sfx';
+            badge.textContent = sfxWords[Math.floor(Math.random() * sfxWords.length)];
+            badge.style.left = e.clientX + 'px';
+            badge.style.top = e.clientY + 'px';
+            document.body.appendChild(badge);
+            setTimeout(() => badge.remove(), 750);
+        });
+
+        // 2. SYNTHÉTISEUR MUSIQUE RÉTRO JAPONAISE
+        let isPlaying = false;
+        let melodyTimer = null;
+        let noteStep = 0;
+
+        const retroNotes = [
+            293.66, 329.63, 440.00, 493.88, 587.33, 493.88, 440.00, 329.63,
+            261.63, 329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63
+        ];
+
+        function playNextNote() {
+            if (!isPlaying || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(retroNotes[noteStep % retroNotes.length], audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.36);
+            noteStep++;
+        }
+
+        function toggleRetroMusic() {
+            const btn = document.getElementById('music-btn');
+            const status = document.getElementById('music-status');
+            const eq = document.getElementById('eq-bars');
+            const mascot = document.getElementById('hero-mascot');
+
+            if (!isPlaying) {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                isPlaying = true;
+                btn.textContent = '⏸';
+                if (status) status.textContent = 'Lecture : Thème Tokyo 90s...';
+                if (eq) eq.classList.add('eq-playing');
+                mascot.classList.add('music-dancing');
+                playNextNote();
+                melodyTimer = setInterval(playNextNote, 320);
+            } else {
+                isPlaying = false;
+                clearInterval(melodyTimer);
+                btn.textContent = '▶';
+                if (status) status.textContent = 'Musique en pause';
+                if (eq) eq.classList.remove('eq-playing');
+                mascot.classList.remove('music-dancing');
+            }
+        }
+
+        // 3. ARTICLES DU BLOG SUR LES PERSONNAGES CULTES
+        const initialPosts = [
+            {
+                id: 1,
+                chapter: "CHAPITRE 01",
+                character: "Son Goku",
+                manga: "Dragon Ball Z",
+                jp: "孫悟空 • ドラゴンボール",
+                year: 1990,
+                decade: "1990",
+                likes: 142,
+                quote: "« Je suis le Saiyan venu de la Terre pour te vaincre ! »",
+                summary: "Comment la transformation en Super Saiyan sur Namek en 1991 a redéfini tous les codes du manga d'action.",
+                content: "En 1991, lorsque Son Goku laisse éclater sa colère face à Freezer sur la planète Namek, le monde du manga bascule. Akira Toriyama invente le code visuel ultime du Shōnen : les cheveux dorés, l'aura électrique et le dépassement de ses propres limites par l'entraînement."
+            },
+            {
+                id: 2,
+                chapter: "CHAPITRE 02",
+                character: "Naruto Uzumaki",
+                manga: "Naruto",
+                jp: "うずまきナルト • ナルト",
+                year: 1999,
+                decade: "1990",
+                likes: 128,
+                quote: "« Je ne reviens jamais sur ma parole, c'est ça mon nindō ! »",
+                summary: "Du paria solitaire de Konoha au héros respecté de tous : retour sur le parcours inspirant de Naruto.",
+                content: "Créé par Masashi Kishimoto à la fin des années 90, Naruto a touché toute une génération par ses thèmes universels : la solitude, la reconnaissance et la persévérance. Son lien fraternel et rival avec Sasuke reste l'un des moteurs dramatiques les plus célèbres du manga."
+            },
+            {
+                id: 3,
+                chapter: "CHAPITRE 03",
+                character: "Light Yagami & L",
+                manga: "Death Note",
+                jp: "夜神月 • デスノート",
+                year: 2003,
+                decade: "2000",
+                likes: 115,
+                quote: "« Je vais devenir le dieu d'un monde nouveau. »",
+                summary: "Quand un cahier noir transforme un lycéen surdoué en Kira face au plus grand détective du monde.",
+                content: "Au début des années 2000, Death Note prouve qu'un Shōnen n'a pas besoin de combats physiques pour être haletant. Chaque dialogue entre Light et L est une partie d'échecs psychologique d'une tension rare."
+            },
+            {
+                id: 4,
+                chapter: "CHAPITRE 04",
+                character: "Edward Elric",
+                manga: "Fullmetal Alchemist",
+                jp: "エドワード・エルリック",
+                year: 2001,
+                decade: "2000",
+                likes: 98,
+                quote: "« On ne peut rien obtenir sans rien donner en échange. »",
+                summary: "L'échange équivalent au cœur d'une fresque steampunk magistrale signée Hiromu Arakawa.",
+                content: "Avec son bras mécanique Automail et son manteau rouge, Edward Elric incarne l'intelligence et le courage face aux conséquences de ses propres erreurs."
+            },
+            {
+                id: 5,
+                chapter: "CHAPITRE 05",
+                character: "Tanjiro Kamado",
+                manga: "Demon Slayer",
+                jp: "竈門炭治郎 • 鬼滅の刃",
+                year: 2016,
+                decade: "2010",
+                likes: 164,
+                quote: "« Peu importe combien de fois je tomberai, je me relèverai pour sauver ma sœur ! »",
+                summary: "La bienveillance comme force ultime dans un Japon de l'ère Taishō sublime et impitoyable.",
+                content: "Contrairement aux héros impulsifs, Tanjiro brille par son empathie envers ses adversaires tout en maîtrisant les souffles de l'Eau et du Soleil."
+            },
+            {
+                id: 6,
+                chapter: "CHAPITRE 06",
+                character: "Satoru Gojo",
+                manga: "Jujutsu Kaisen",
+                jp: "五条悟 • 呪術廻戦",
+                year: 2018,
+                decade: "2010",
+                likes: 189,
+                quote: "« Au ciel et sur la terre, je suis le seul vénéré. »",
+                summary: "Pourquoi le professeur aux yeux de l'Infini est devenu l'icône absolue de la génération 2020.",
+                content: "Charismatique, décontracté et surpuissant, Satoru Gojo renverse le rôle traditionnel du mentor en devenant le pilier central de l'univers Jujutsu."
+            }
+        ];
+
+        let posts = JSON.parse(localStorage.getItem('aida_manga_blog_posts')) || initialPosts;
+        let activeFilter = 'all';
+
+        function renderBlog() {
+            const query = document.getElementById('blog-search').value.toLowerCase();
+            const filtered = posts.filter(p => {
+                const matchText = p.character.toLowerCase().includes(query) || p.manga.toLowerCase().includes(query) || p.summary.toLowerCase().includes(query);
+                return activeFilter === 'all' ? matchText : (matchText && p.decade === activeFilter);
+            });
+
+            document.getElementById('blog-grid').innerHTML = filtered.map((post, idx) => `
+                <article class="manga-panel reveal-panel p-6 flex flex-col justify-between bg-[#FFFDF9]" style="transition-delay: ${idx * 70}ms;">
+                    <div class="hanko-stamp absolute -top-3 -right-3 w-11 h-11 rounded-full bg-[#E11D48] border-2 border-[#18181B] text-white font-serifjp font-extrabold text-sm flex items-center justify-center shadow-md pointer-events-none z-20">
+                        必読
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center border-b-2 border-[#18181B] pb-3 mb-4">
+                            <span class="font-mono font-bold text-xs bg-[#FACC15] px-2.5 py-0.5 border border-[#18181B]">${post.chapter} • ${post.year}</span>
+                            <span class="font-serifjp text-xs font-bold text-[#E11D48]">${post.jp}</span>
+                        </div>
+                        <span class="font-mono text-xs font-bold uppercase text-zinc-500">${post.manga}</span>
+                        <h3 class="font-jp text-2xl uppercase mt-1 mb-3">${post.character}</h3>
+                        <p class="text-sm text-zinc-700 leading-relaxed mb-5">${post.summary}</p>
+                    </div>
+                    <div class="pt-4 border-t-2 border-dashed border-zinc-300 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="openArticle(${post.id})" class="px-3.5 py-2 bg-[#18181B] hover:bg-[#E11D48] text-white font-mono font-bold text-xs uppercase transition-colors">
+                                Lire →
+                            </button>
+                            <button type="button" onclick="startEdit(${post.id})" class="px-2.5 py-2 bg-[#FACC15] hover:bg-amber-300 border border-[#18181B] font-mono font-bold text-xs" title="Modifier cette fiche">
+                                ✏️
+                            </button>
+                            <button type="button" onclick="deletePost(${post.id})" class="px-2.5 py-2 bg-zinc-200 hover:bg-rose-200 border border-[#18181B] font-mono font-bold text-xs" title="Supprimer cette fiche">
+                                🗑️
+                            </button>
+                        </div>
+                        <span class="font-mono text-xs font-bold text-[#E11D48]">🔥 ${post.likes}</span>
+                    </div>
+                </article>
+            `).join('');
+
+            observePanels();
+        }
+
+        function observePanels() {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal-panel').forEach(el => obs.observe(el));
+        }
+
+        function setFilter(decade, btn) {
+            activeFilter = decade;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-[#18181B]', 'text-white');
+                b.classList.add('bg-[#F4EFE6]', 'border-2', 'border-[#18181B]');
+            });
+            btn.classList.remove('bg-[#F4EFE6]', 'border-2', 'border-[#18181B]');
+            btn.classList.add('bg-[#18181B]', 'text-white');
+            renderBlog();
+        }
+
+        document.getElementById('blog-search').addEventListener('input', renderBlog);
+
+        function openArticle(id) {
+            const post = posts.find(p => p.id === id);
+            document.getElementById('modal-badge').textContent = `${post.chapter} • ${post.manga} (${post.year})`;
+            document.getElementById('modal-jp').textContent = post.jp;
+            document.getElementById('modal-title').textContent = post.character;
+            document.getElementById('modal-quote').textContent = post.quote;
+            document.getElementById('modal-body').textContent = post.content;
+            document.getElementById('modal-likes').textContent = post.likes;
+
+            document.getElementById('modal-like-btn').onclick = () => {
+                post.likes++;
+                localStorage.setItem('aida_manga_blog_posts', JSON.stringify(posts));
+                document.getElementById('modal-likes').textContent = post.likes;
+                renderBlog();
+            };
+
+            document.getElementById('modal-edit-btn').onclick = () => {
+                closeArticle();
+                startEdit(post.id);
+            };
+
+            const modal = document.getElementById('article-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeArticle() {
+            const modal = document.getElementById('article-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 4. MODIFICATION, AJOUT & SUPPRESSION DE FICHE
+        function startEdit(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            document.getElementById('edit-id').value = post.id;
+            document.getElementById('p-char').value = post.character;
+            document.getElementById('p-manga').value = post.manga;
+            document.getElementById('p-year').value = post.year;
+            document.getElementById('p-jp').value = post.jp;
+            document.getElementById('p-quote').value = post.quote.replace(/^«\s*|\s*»$/g, '');
+            document.getElementById('p-content').value = post.content;
+
+            document.getElementById('form-badge').textContent = `Édition • ${post.chapter}`;
+            document.getElementById('form-badge').classList.replace('bg-[#E11D48]', 'bg-[#FACC15]');
+            document.getElementById('form-badge').classList.replace('text-white', 'text-[#18181B]');
+            document.getElementById('form-title').textContent = `Modifier : ${post.character}`;
+            document.getElementById('form-submit-btn').textContent = "Enregistrer les modifications ✓";
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            document.getElementById('ecrire').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('new-post-form').reset();
+            document.getElementById('form-badge').textContent = "Rédaction • Nouvel Article";
+            document.getElementById('form-badge').classList.replace('bg-[#FACC15]', 'bg-[#E11D48]');
+            document.getElementById('form-badge').classList.replace('text-[#18181B]', 'text-white');
+            document.getElementById('form-title').textContent = "Publier une Fiche Personnage";
+            document.getElementById('form-submit-btn').textContent = "Publier dans le Magazine ✒️";
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        }
+
+        function deletePost(id) {
+            posts = posts.filter(p => p.id !== id);
+            localStorage.setItem('aida_manga_blog_posts', JSON.stringify(posts));
+            if (document.getElementById('edit-id').value == id) cancelEdit();
+            renderBlog();
+        }
+
+        document.getElementById('new-post-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id').value;
+            const year = parseInt(document.getElementById('p-year').value);
+            const dec = Math.floor(year / 10) * 10 + "";
+            const decadeVal = ["1990", "2000", "2010", "2020"].includes(dec) ? dec : "2020";
+            const contentVal = document.getElementById('p-content').value;
+            const summaryVal = contentVal.length > 115 ? contentVal.substring(0, 115) + "..." : contentVal;
+
+            if (editId) {
+                const index = posts.findIndex(p => p.id == editId);
+                if (index !== -1) {
+                    posts[index].character = document.getElementById('p-char').value;
+                    posts[index].manga = document.getElementById('p-manga').value;
+                    posts[index].year = year;
+                    posts[index].decade = decadeVal;
+                    posts[index].jp = document.getElementById('p-jp').value || "新章 • ÉDITÉ";
+                    posts[index].quote = `« ${document.getElementById('p-quote').value} »`;
+                    posts[index].content = contentVal;
+                    posts[index].summary = summaryVal;
+                }
+                cancelEdit();
+            } else {
+                const newPost = {
+                    id: Date.now(),
+                    chapter: `CHAPITRE 0${posts.length + 1}`,
+                    character: document.getElementById('p-char').value,
+                    manga: document.getElementById('p-manga').value,
+                    jp: document.getElementById('p-jp').value || "新章 • NOUVEAU",
+                    year: year,
+                    decade: decadeVal,
+                    likes: 1,
+                    quote: `« ${document.getElementById('p-quote').value} »`,
+                    summary: summaryVal,
+                    content: contentVal
+                };
+                posts.unshift(newPost);
+                e.target.reset();
+            }
+
+            localStorage.setItem('aida_manga_blog_posts', JSON.stringify(posts));
+            renderBlog();
+        });
+
+        renderBlog();
+    </script>
+</body>
+</html>

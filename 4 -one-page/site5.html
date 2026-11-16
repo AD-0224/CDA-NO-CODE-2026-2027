@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurelia — Vos repères santé au quotidien</title>
+
+  <!-- Fonts : Fraunces + Plus Jakarta Sans + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            aurelia: {
+              linen: '#FAF7F2',
+              cream: '#F2ECE1',
+              eucalyptus: '#1B4D3E',
+              sage: '#3D7060',
+              terracotta: '#C46347',
+              terracottaBg: '#FDF2EE',
+              gold: '#B5894C',
+              ink: '#1E242B',
+              muted: '#5C6670',
+              border: '#E4DCCB',
+              darkBg: '#111614',
+              darkCard: '#18201D',
+              darkBorder: '#283430'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Three.js CDN (WebGL 3D) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- GSAP + ScrollTrigger CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lenis Smooth Scroll CDN -->
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <style>
+    html.lenis, html.lenis body { height: auto; }
+    .lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+    body {
+      transition: background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1), color 0.5s ease;
+      overflow-x: hidden;
+    }
+
+    /* Fond dynamique multicouche piloté par le scroll */
+    .ambient-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .ambient-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(110px);
+      opacity: 0.5;
+      will-change: transform, background-color;
+      transition: background-color 0.8s ease;
+    }
+    .orb-1 { width: 52vw; height: 52vw; max-width: 720px; max-height: 720px; top: -14%; left: -10%; background: #DCEAE4; }
+    .orb-2 { width: 46vw; height: 46vw; max-width: 640px; max-height: 640px; bottom: -12%; right: -8%; background: #F4E1D6; }
+    .orb-3 { width: 38vw; height: 38vw; max-width: 520px; max-height: 520px; top: 38%; left: 30%; background: #EDE4D0; }
+
+    .dark .orb-1 { background: rgba(27, 77, 62, 0.32); }
+    .dark .orb-2 { background: rgba(196, 99, 71, 0.16); }
+    .dark .orb-3 { background: rgba(61, 112, 96, 0.18); }
+
+    /* Canvas moléculaire en filigrane réactif au scroll */
+    #scroll-bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .paper-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.028;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, #1B4D3E 0%, #B5894C 55%, #C46347 100%);
+      z-index: 60;
+    }
+
+    .editorial-header {
+      background: rgba(250, 247, 242, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.3s ease;
+    }
+    .dark .editorial-header { background: rgba(17, 22, 20, 0.78); }
+
+    .warm-panel {
+      background: rgba(255, 253, 249, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(228, 220, 203, 0.92);
+      box-shadow: 0 14px 36px -14px rgba(27, 77, 62, 0.08);
+      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+    .dark .warm-panel {
+      background: rgba(24, 32, 29, 0.88);
+      border: 1px solid rgba(40, 52, 48, 0.92);
+      box-shadow: 0 14px 36px -14px rgba(0, 0, 0, 0.45);
+    }
+
+    .aurelia-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 253, 249, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid #E4DCCB;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s ease;
+    }
+    .dark .aurelia-card {
+      background: rgba(24, 32, 29, 0.92);
+      border: 1px solid #283430;
+    }
+    .aurelia-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 22px 44px -16px rgba(27, 77, 62, 0.14);
+      border-color: #1B4D3E;
+    }
+    .dark .aurelia-card:hover { border-color: #3D7060; }
+
+    #molecule-3d-viewport { cursor: grab; touch-action: none; }
+    #molecule-3d-viewport:active { cursor: grabbing; }
+
+    .nav-link { position: relative; padding-bottom: 3px; }
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1.5px;
+      background-color: #1B4D3E;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .dark .nav-link::after { background-color: #6EE7B7; }
+    .nav-link:hover::after { transform: scaleX(1); transform-origin: left; }
+
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #D5CCB6; border-radius: 999px; }
+
+    @media print {
+      body { background: white !important; color: black !important; }
+      .ambient-backdrop, #scroll-bg-canvas, .paper-grain, #scroll-progress, header, footer, #search-container, .no-print { display: none !important; }
+      .warm-panel, .aurelia-card { border: 1px solid #ccc !important; box-shadow: none !important; background: white !important; opacity: 1 !important; transform: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-aurelia-linen text-aurelia-ink dark:bg-aurelia-darkBg dark:text-stone-100 antialiased selection:bg-aurelia-eucalyptus selection:text-white">
+
+  <div id="scroll-progress"></div>
+
+  <!-- Couche 1 : Halos organiques pilotés en parallaxe au scroll -->
+  <div class="ambient-backdrop">
+    <div id="bg-orb-1" class="ambient-orb orb-1"></div>
+    <div id="bg-orb-2" class="ambient-orb orb-2"></div>
+    <div id="bg-orb-3" class="ambient-orb orb-3"></div>
+  </div>
+
+  <!-- Couche 2 : Réseau moléculaire vectoriel dynamique au scroll -->
+  <canvas id="scroll-bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Couche 3 : Grain papier subtil -->
+  <div class="paper-grain"></div>
+
+  <div class="relative z-10 min-h-screen flex flex-col">
+
+    <!-- En-tête sobre -->
+    <header id="main-header" class="sticky top-0 z-40 editorial-header border-b border-aurelia-border/60 dark:border-aurelia-darkBorder">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        
+        <a href="#recherche" class="smooth-anchor flex items-center gap-2.5 group">
+          <svg class="w-5 h-5 text-aurelia-eucalyptus dark:text-emerald-400 transition-transform duration-500 group-hover:rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v10M7 12h10" stroke-linecap="round" />
+          </svg>
+          <span class="font-serif font-semibold tracking-tight text-aurelia-ink dark:text-white text-xl">Aurelia</span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8 text-[13px] font-medium text-aurelia-muted dark:text-stone-300">
+          <a href="#fiche-clinique" class="smooth-anchor nav-link hover:text-aurelia-ink dark:hover:text-white transition-colors">Le traitement</a>
+          <a href="#pharmacocinetique" class="smooth-anchor nav-link hover:text-aurelia-ink dark:hover:text-white transition-colors">Action sur 24h</a>
+          <a href="#analyseur-ordonnance" class="smooth-anchor nav-link hover:text-aurelia-ink dark:hover:text-white transition-colors">Mon ordonnance</a>
+          <a href="#capsules-video" class="smooth-anchor nav-link hover:text-aurelia-ink dark:hover:text-white transition-colors">Conseils pratiques</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <a href="#analyseur-ordonnance" class="smooth-anchor inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-aurelia-cream/90 dark:bg-aurelia-darkCard text-aurelia-eucalyptus dark:text-emerald-300 border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-medium hover:border-aurelia-eucalyptus transition-colors">
+            <span>Ordonnance</span>
+            <span id="header-rx-badge" class="px-1.5 py-0.2 rounded-full bg-aurelia-eucalyptus text-white text-[10px] font-mono">1</span>
+          </a>
+
+          <button id="dark-mode-toggle" type="button" class="p-2 rounded-full text-aurelia-muted hover:text-aurelia-ink dark:text-stone-400 dark:hover:text-white hover:bg-aurelia-cream/70 dark:hover:bg-aurelia-darkCard transition-colors cursor-pointer" title="Changer la luminosité">
+            <svg id="sun-icon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg id="moon-icon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1">
+
+      <!-- Hero & Recherche -->
+      <section id="recherche" class="pt-12 pb-10 sm:pt-16 sm:pb-12 px-4 sm:px-6">
+        <div class="max-w-3xl mx-auto text-center">
+          <div class="hero-animate inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/85 dark:bg-aurelia-darkCard/85 backdrop-blur-sm border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-medium text-aurelia-eucalyptus dark:text-emerald-300 mb-6">
+            <span>Sélection ciblée : traitements de fond & indispensables du quotidien</span>
+          </div>
+
+          <h1 class="hero-animate font-serif text-3xl sm:text-5xl font-semibold tracking-tight text-aurelia-ink dark:text-white leading-[1.15]">
+            Comprendre vos médicaments, <span class="text-aurelia-eucalyptus dark:text-emerald-400 italic font-normal">en toute sérénité.</span>
+          </h1>
+
+          <p class="hero-animate mt-4 text-sm sm:text-base text-aurelia-muted dark:text-stone-300 max-w-xl mx-auto leading-relaxed">
+            Des repères clairs sur vos traitements, leur structure moléculaire et les précautions à prendre pour éviter toute interaction.
+          </p>
+
+          <!-- Barre de recherche -->
+          <div class="hero-animate mt-8 max-w-2xl mx-auto relative" id="search-container">
+            <div class="relative flex items-center warm-panel rounded-2xl shadow-md border border-aurelia-border dark:border-aurelia-darkBorder focus-within:border-aurelia-eucalyptus focus-within:ring-4 focus-within:ring-aurelia-eucalyptus/10 transition-all duration-300">
+              <div class="pl-4 sm:pl-5 text-aurelia-muted">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                </svg>
+              </div>
+              <input
+                id="drug-search-input"
+                type="text"
+                autocomplete="off"
+                placeholder="Rechercher un médicament (ex : Doliprane, Advil, Coumadine, Metformin...)"
+                class="w-full bg-transparent px-3.5 py-4 text-sm sm:text-base text-aurelia-ink dark:text-white placeholder-aurelia-muted/70 focus:outline-none"
+              />
+              <button id="clear-search-btn" type="button" class="hidden mr-2 p-1.5 text-aurelia-muted hover:text-aurelia-ink dark:hover:text-white rounded-lg transition-colors" title="Effacer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+              <button id="search-submit-btn" type="button" class="mr-2 px-5 py-2.5 rounded-xl bg-aurelia-eucalyptus hover:bg-aurelia-sage text-white text-xs sm:text-sm font-semibold transition-colors duration-300 cursor-pointer flex items-center gap-2">
+                <span id="search-btn-text">Consulter</span>
+              </button>
+            </div>
+
+            <div id="autocomplete-dropdown" class="hidden absolute left-0 right-0 mt-2 bg-[#FFFDF9] dark:bg-aurelia-darkCard rounded-2xl border border-aurelia-border dark:border-aurelia-darkBorder shadow-xl overflow-hidden z-50 text-left max-h-80 overflow-y-auto custom-scroll"></div>
+          </div>
+
+          <!-- Accès rapide -->
+          <div class="hero-animate mt-6 space-y-2.5 text-xs">
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <span class="text-aurelia-muted font-medium mr-1">Au quotidien :</span>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-aurelia-darkCard hover:bg-aurelia-cream dark:hover:bg-emerald-950/50 text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Doliprane">Doliprane</button>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-aurelia-darkCard hover:bg-aurelia-cream dark:hover:bg-emerald-950/50 text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Advil">Advil (Ibuprofène)</button>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-aurelia-darkCard hover:bg-aurelia-cream dark:hover:bg-emerald-950/50 text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Spasfon">Spasfon</button>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-white/90 dark:bg-aurelia-darkCard hover:bg-aurelia-cream dark:hover:bg-emerald-950/50 text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Amoxicilline">Amoxicilline</button>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <span class="text-aurelia-muted font-medium mr-1">Suivi spécialisé :</span>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-aurelia-cream/80 dark:bg-aurelia-darkCard hover:bg-aurelia-cream text-aurelia-eucalyptus dark:text-emerald-300 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Coumadine">Coumadine</button>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-aurelia-cream/80 dark:bg-aurelia-darkCard hover:bg-aurelia-cream text-aurelia-eucalyptus dark:text-emerald-300 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Lovenox">Lovenox</button>
+              <button type="button" class="quick-pill px-3.5 py-1.5 rounded-full bg-aurelia-cream/80 dark:bg-aurelia-darkCard hover:bg-aurelia-cream text-aurelia-eucalyptus dark:text-emerald-300 border border-aurelia-border dark:border-aurelia-darkBorder cursor-pointer font-medium transition-colors" data-drug="Cordarone">Cordarone</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fiche Traitement + Visualiseur 3D Interactif -->
+      <section id="fiche-clinique" class="px-4 sm:px-6 pb-16">
+        <div class="max-w-6xl mx-auto">
+
+          <div id="drug-header-card" class="warm-panel rounded-3xl p-6 sm:p-8 mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pb-6 border-b border-aurelia-border dark:border-aurelia-darkBorder">
+              
+              <div class="lg:col-span-7 space-y-4">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span id="drug-category-badge" class="text-xs font-semibold px-3 py-1 rounded-full bg-aurelia-eucalyptus text-white">Médicament courant</span>
+                  <span id="drug-prescription-badge" class="text-xs font-medium px-3 py-1 rounded-full bg-aurelia-cream dark:bg-emerald-950/60 text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-emerald-800">Sans ordonnance</span>
+                  <span id="drug-formula-badge" class="font-mono text-xs px-2.5 py-1 rounded-full bg-white/80 dark:bg-aurelia-darkBg text-aurelia-muted dark:text-stone-400 border border-aurelia-border dark:border-aurelia-darkBorder">C₈H₉NO₂</span>
+                  <span id="drug-source-badge" class="font-mono text-[11px] px-2.5 py-1 rounded-full bg-aurelia-cream/60 dark:bg-aurelia-darkBg text-aurelia-eucalyptus dark:text-emerald-300">Référentiel Aurelia</span>
+                </div>
+
+                <div>
+                  <h2 id="drug-title" class="font-serif text-3xl sm:text-4xl font-semibold text-aurelia-ink dark:text-white tracking-tight">Doliprane — Paracétamol</h2>
+                  <p id="drug-subtitle" class="text-sm text-aurelia-muted dark:text-stone-400 mt-1.5">Substance active : <span class="font-medium text-aurelia-ink dark:text-stone-200">Paracétamol</span></p>
+                </div>
+
+                <p id="drug-summary-lead" class="text-sm text-aurelia-ink/85 dark:text-stone-300 leading-relaxed"></p>
+
+                <div class="pt-1 flex flex-wrap items-center gap-2.5 no-print">
+                  <button id="add-to-rx-btn" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-aurelia-eucalyptus hover:bg-aurelia-sage text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs">
+                    <span>+ Ajouter à mon ordonnance</span>
+                  </button>
+                  <button id="speak-sheet-btn" type="button" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-aurelia-cream hover:bg-aurelia-border/60 dark:bg-aurelia-darkBg text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-semibold transition-colors cursor-pointer" title="Lecture audio">
+                    <svg class="w-4 h-4 text-aurelia-eucalyptus dark:text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                    <span id="speak-btn-label">Écouter</span>
+                  </button>
+                  <button id="print-report-btn" type="button" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-aurelia-darkCard hover:bg-aurelia-cream text-aurelia-ink dark:text-stone-200 border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-semibold transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Imprimer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Visualiseur 3D WebGL -->
+              <div class="lg:col-span-5 no-print">
+                <div class="relative rounded-2xl bg-aurelia-cream/65 dark:bg-aurelia-darkBg/90 border border-aurelia-border dark:border-aurelia-darkBorder overflow-hidden h-64 flex flex-col justify-between">
+                  <div class="relative z-10 px-4 pt-3 flex items-center justify-between text-[11px]">
+                    <span class="font-medium text-aurelia-eucalyptus dark:text-emerald-300 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-aurelia-eucalyptus dark:bg-emerald-400"></span>
+                      Structure moléculaire
+                    </span>
+                    <span class="text-aurelia-muted">Glissez pour pivoter</span>
+                  </div>
+
+                  <div id="molecule-3d-viewport" class="absolute inset-0 w-full h-full"></div>
+
+                  <div class="relative z-10 px-3 pb-3 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1 bg-white/85 dark:bg-aurelia-darkCard/90 backdrop-blur-sm p-1 rounded-lg border border-aurelia-border dark:border-aurelia-darkBorder text-[11px]">
+                      <button type="button" id="mol-style-sticks" class="px-2 py-1 rounded bg-aurelia-eucalyptus text-white font-medium cursor-pointer transition-colors">Liaisons</button>
+                      <button type="button" id="mol-style-spheres" class="px-2 py-1 rounded text-aurelia-muted hover:text-aurelia-ink dark:hover:text-white font-medium cursor-pointer transition-colors">Volume</button>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[10px] text-aurelia-muted bg-white/80 dark:bg-aurelia-darkCard/80 px-2.5 py-1 rounded-lg border border-aurelia-border/60 dark:border-aurelia-darkBorder">
+                      <span class="inline-block w-2 h-2 rounded-full bg-[#1B4D3E]"></span> C
+                      <span class="inline-block w-2 h-2 rounded-full bg-[#C46347] ml-1"></span> O
+                      <span class="inline-block w-2 h-2 rounded-full bg-[#B5894C] ml-1"></span> N
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Correspondances Européennes & Calculateur pondéral -->
+            <div class="pt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 text-xs">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold text-aurelia-muted dark:text-stone-300">Équivalents en Europe :</span>
+                <div id="eu-brands-list" class="flex flex-wrap gap-1.5"></div>
+              </div>
+
+              <div class="flex items-center gap-2.5 bg-aurelia-cream/70 dark:bg-aurelia-darkBg px-3.5 py-2 rounded-xl border border-aurelia-border dark:border-aurelia-darkBorder">
+                <span class="text-aurelia-muted dark:text-stone-300 font-medium">Poids patient :</span>
+                <input id="patient-weight-input" type="number" value="70" min="5" max="180" class="w-14 bg-white dark:bg-aurelia-darkCard text-aurelia-ink dark:text-white px-2 py-1 rounded-lg text-xs font-semibold text-center border border-aurelia-border dark:border-aurelia-darkBorder focus:outline-none" />
+                <span class="text-aurelia-muted">kg</span>
+                <span id="calculated-dose-badge" class="text-[11px] font-semibold text-aurelia-eucalyptus dark:text-emerald-300 bg-white dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-aurelia-border dark:border-emerald-800">Dose calculée</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grille des 5 repères -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="cards-grid">
+
+            <article class="aurelia-card rounded-3xl p-6 flex flex-col justify-between">
+              <div>
+                <div class="mb-4">
+                  <span class="text-xs font-semibold text-aurelia-eucalyptus dark:text-emerald-300 bg-aurelia-cream dark:bg-emerald-950/60 px-3 py-1 rounded-full">1 · Son rôle</span>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-aurelia-ink dark:text-white mb-2">Dans quel cas l'utiliser ?</h3>
+                <p id="card-utilisation" class="text-sm text-aurelia-muted dark:text-stone-300 leading-relaxed"></p>
+              </div>
+              <div class="mt-5 pt-3 border-t border-aurelia-border/60 dark:border-aurelia-darkBorder text-[11px] text-aurelia-muted">
+                Indications reconnues
+              </div>
+            </article>
+
+            <article class="aurelia-card rounded-3xl p-6 flex flex-col justify-between">
+              <div>
+                <div class="mb-4">
+                  <span class="text-xs font-semibold text-aurelia-eucalyptus dark:text-emerald-300 bg-aurelia-cream dark:bg-emerald-950/60 px-3 py-1 rounded-full">2 · Équivalences</span>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-aurelia-ink dark:text-white mb-2">Médicaments proches & génériques</h3>
+                <div id="card-equivalent" class="text-sm text-aurelia-muted dark:text-stone-300 leading-relaxed space-y-2"></div>
+              </div>
+              <div class="mt-5 pt-3 border-t border-aurelia-border/60 dark:border-aurelia-darkBorder text-[11px] text-aurelia-muted">
+                Attention à ne pas cumuler deux marques identiques
+              </div>
+            </article>
+
+            <article class="aurelia-card rounded-3xl p-6 flex flex-col justify-between">
+              <div>
+                <div class="mb-4">
+                  <span class="text-xs font-semibold text-aurelia-eucalyptus dark:text-emerald-300 bg-aurelia-cream dark:bg-emerald-950/60 px-3 py-1 rounded-full">3 · Gestes & Plantes</span>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-aurelia-ink dark:text-white mb-2">Approche naturelle & réflexes</h3>
+                <p id="card-naturel" class="text-sm text-aurelia-muted dark:text-stone-300 leading-relaxed"></p>
+              </div>
+              <div class="mt-5 pt-3 border-t border-aurelia-border/60 dark:border-aurelia-darkBorder text-[11px] text-aurelia-muted">
+                Conseils complémentaires d'officine
+              </div>
+            </article>
+
+            <article class="aurelia-card rounded-3xl p-6 flex flex-col justify-between">
+              <div>
+                <div class="mb-4">
+                  <span class="text-xs font-semibold text-aurelia-eucalyptus dark:text-emerald-300 bg-aurelia-cream dark:bg-emerald-950/60 px-3 py-1 rounded-full">4 · Bon usage</span>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-aurelia-ink dark:text-white mb-2">Comment bien le prendre ?</h3>
+                <p id="card-posologie" class="text-sm text-aurelia-muted dark:text-stone-300 leading-relaxed"></p>
+              </div>
+              <div class="mt-5 pt-3 border-t border-aurelia-border/60 dark:border-aurelia-darkBorder text-[11px] text-aurelia-muted">
+                Respectez l'intervalle entre deux prises
+              </div>
+            </article>
+
+            <article class="aurelia-card rounded-3xl p-6 flex flex-col justify-between md:col-span-2 lg:col-span-2 border-aurelia-terracotta/40 bg-aurelia-terracottaBg/55 dark:bg-orange-950/15">
+              <div>
+                <div class="mb-4">
+                  <span class="text-xs font-semibold text-aurelia-terracotta dark:text-orange-300 bg-aurelia-terracottaBg dark:bg-orange-950/60 border border-aurelia-terracotta/30 px-3 py-1 rounded-full">5 · Vigilance</span>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-aurelia-ink dark:text-white mb-2">Les situations où il faut éviter ce médicament</h3>
+                <p id="card-contre-indications" class="text-sm text-aurelia-ink/90 dark:text-stone-200 leading-relaxed"></p>
+              </div>
+              <div class="mt-5 pt-3 border-t border-aurelia-terracotta/20 flex items-center justify-between text-[11px] text-aurelia-terracotta dark:text-orange-300 font-medium">
+                <span>Un doute ? Parlez-en à votre pharmacien avant la prise</span>
+              </div>
+            </article>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Courbe Pharmacocinétique SVG Dynamique -->
+      <section id="pharmacocinetique" class="px-4 sm:px-6 pb-16 scroll-reveal">
+        <div class="max-w-6xl mx-auto warm-panel rounded-3xl p-6 sm:p-8">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-aurelia-eucalyptus dark:text-emerald-400">Diffusion dans l'organisme</span>
+              <h2 class="font-serif text-xl sm:text-2xl font-semibold text-aurelia-ink dark:text-white mt-1">Profil d'action sur 24 heures</h2>
+              <p class="text-sm text-aurelia-muted dark:text-stone-300 mt-1">
+                Évolution estimée de <strong id="pk-drug-name" class="text-aurelia-ink dark:text-white">Doliprane</strong> dans le sang selon le rythme de prise.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <button type="button" id="pk-mode-single" class="px-3.5 py-2 rounded-xl bg-aurelia-eucalyptus text-white font-semibold cursor-pointer transition-colors">1 prise unique</button>
+              <button type="button" id="pk-mode-multi" class="px-3.5 py-2 rounded-xl bg-aurelia-cream dark:bg-aurelia-darkBg text-aurelia-ink dark:text-stone-300 border border-aurelia-border dark:border-aurelia-darkBorder font-medium cursor-pointer transition-colors">Prises espacées (6h)</button>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-white/80 dark:bg-aurelia-darkBg/80 border border-aurelia-border dark:border-aurelia-darkBorder p-4 sm:p-6">
+            <svg id="pk-svg-chart" viewBox="0 0 800 240" class="w-full h-52 sm:h-60 overflow-visible">
+              <rect x="60" y="65" width="710" height="85" fill="#1B4D3E" fill-opacity="0.07" rx="4" />
+              <text x="760" y="80" text-anchor="end" class="fill-aurelia-eucalyptus dark:fill-emerald-400 text-[10px] font-mono">Zone d'efficacité optimale</text>
+              
+              <line x1="60" y1="45" x2="770" y2="45" stroke="#C46347" stroke-width="1" stroke-dasharray="4 4" />
+              <text x="760" y="38" text-anchor="end" class="fill-aurelia-terracotta text-[10px] font-mono">Seuil de vigilance / surdosage</text>
+
+              <line x1="60" y1="200" x2="770" y2="200" stroke="#94A3B8" stroke-width="1" />
+              <line x1="60" y1="20" x2="60" y2="200" stroke="#94A3B8" stroke-width="1" />
+
+              <g class="fill-aurelia-muted text-[11px] font-mono" text-anchor="middle">
+                <text x="60" y="220">0h</text>
+                <text x="237" y="220">6h</text>
+                <text x="415" y="220">12h</text>
+                <text x="592" y="220">18h</text>
+                <text x="770" y="220">24h</text>
+              </g>
+
+              <path id="pk-curve-area" d="" fill="#1B4D3E" fill-opacity="0.14" />
+              <path id="pk-curve-path" d="" fill="none" stroke="#1B4D3E" stroke-width="2.8" stroke-linecap="round" />
+            </svg>
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-aurelia-muted">
+              <span id="pk-summary-text">Pic d'action atteint environ 45 à 60 minutes après l'ingestion, avec élimination progressive sur 6 heures.</span>
+              <span class="font-mono text-[11px]" id="pk-halflife-badge">Demi-vie (t½) : ~2h</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Analyseur Combinatoire d'Ordonnance -->
+      <section id="analyseur-ordonnance" class="px-4 sm:px-6 pb-16 scroll-reveal">
+        <div class="max-w-6xl mx-auto warm-panel rounded-3xl p-6 sm:p-8">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-aurelia-terracotta dark:text-orange-400">Sécurité croisée</span>
+              <h2 class="font-serif text-xl sm:text-2xl font-semibold text-aurelia-ink dark:text-white mt-1">Vérificateur d'ordonnance & armoire à pharmacie</h2>
+              <p class="text-sm text-aurelia-muted dark:text-stone-300 mt-1">
+                Composez votre liste de traitements pour détecter automatiquement les doublons ou les incompatibilités.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 no-print">
+              <button type="button" id="export-rx-json" class="px-3 py-2 rounded-xl bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-mono font-medium hover:border-aurelia-eucalyptus transition-colors cursor-pointer">Export JSON</button>
+              <button type="button" id="export-rx-csv" class="px-3 py-2 rounded-xl bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder text-xs font-mono font-medium hover:border-aurelia-eucalyptus transition-colors cursor-pointer">Export CSV</button>
+              <button type="button" id="clear-rx-btn" class="px-3 py-2 rounded-xl bg-aurelia-terracottaBg text-aurelia-terracotta text-xs font-semibold hover:opacity-80 transition-opacity cursor-pointer">Vider la liste</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 mb-6 pb-6 border-b border-aurelia-border/70 dark:border-aurelia-darkBorder">
+            <span class="text-xs font-semibold text-aurelia-muted mr-1">Ajouter un produit :</span>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Doliprane">+ Doliprane</button>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Fervex (Paracétamol)">+ Fervex (Rhume)</button>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Advil">+ Advil</button>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Coumadine">+ Coumadine</button>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Amoxicilline">+ Amoxicilline</button>
+            <button type="button" class="rx-add-preset px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder hover:border-aurelia-eucalyptus cursor-pointer" data-item="Millepertuis">+ Millepertuis</button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-5 space-y-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-aurelia-muted">Traitements sélectionnés (<span id="rx-count">0</span>)</div>
+              <div id="rx-basket-list" class="space-y-2 min-h-[120px]"></div>
+            </div>
+
+            <div class="lg:col-span-7 space-y-3">
+              <div class="text-xs font-semibold uppercase tracking-wider text-aurelia-muted">Bilan d'analyse croisée</div>
+              <div id="rx-analysis-results" class="space-y-3"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Capsules Pédagogiques -->
+      <section id="capsules-video" class="px-4 sm:px-6 pb-20 scroll-reveal">
+        <div class="max-w-6xl mx-auto warm-panel rounded-3xl p-6 sm:p-8">
+          <div class="mb-6">
+            <span class="text-xs font-semibold uppercase tracking-wider text-aurelia-eucalyptus dark:text-emerald-400">Guides pratiques</span>
+            <h2 class="font-serif text-2xl sm:text-3xl font-semibold text-aurelia-ink dark:text-white mt-1">Les bons gestes étape par étape</h2>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div class="lg:col-span-7 flex flex-col">
+              <div class="relative rounded-2xl bg-[#16221E] text-white overflow-hidden border border-aurelia-border dark:border-aurelia-darkBorder flex-1 min-h-[270px] flex flex-col justify-between p-6">
+                <div id="video-stage" class="my-auto flex flex-col items-center justify-center text-center py-3">
+                  <span id="video-step-badge" class="text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-emerald-200 mb-3">Étape 1 sur 3</span>
+                  <h3 id="video-stage-title" class="font-serif text-xl sm:text-2xl font-semibold text-white max-w-md"></h3>
+                  <p id="video-stage-desc" class="text-xs sm:text-sm text-emerald-100/80 max-w-md mt-2 leading-relaxed"></p>
+                </div>
+
+                <div class="space-y-3 pt-4 border-t border-white/10">
+                  <div class="w-full bg-white/15 h-1.5 rounded-full overflow-hidden">
+                    <div id="video-progress-fill" class="bg-aurelia-terracotta h-full w-1/3 transition-all duration-500"></div>
+                  </div>
+                  <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-3">
+                      <button type="button" id="video-play-btn" class="px-3 py-1.5 rounded-lg bg-white text-aurelia-eucalyptus font-semibold hover:bg-aurelia-cream transition-colors cursor-pointer">
+                        <span id="video-play-label">Lecture auto</span>
+                      </button>
+                      <button type="button" id="video-next-step-btn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer">
+                        Étape suivante →
+                      </button>
+                    </div>
+                    <span id="video-duration-label" class="font-mono text-emerald-200/70"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 flex flex-col justify-between gap-3">
+              <button type="button" class="video-chapter-btn active text-left p-4 rounded-2xl border-2 border-aurelia-eucalyptus bg-aurelia-cream/60 dark:bg-aurelia-darkBg transition-all cursor-pointer" data-chapter="0">
+                <div class="text-[11px] font-semibold text-aurelia-eucalyptus dark:text-emerald-300 mb-1">Guide 01 · Automédication</div>
+                <div class="font-serif font-semibold text-base text-aurelia-ink dark:text-white">Éviter les doublons de paracétamol</div>
+              </button>
+              <button type="button" class="video-chapter-btn text-left p-4 rounded-2xl border border-aurelia-border dark:border-aurelia-darkBorder bg-white/80 dark:bg-aurelia-darkCard hover:border-aurelia-eucalyptus transition-all cursor-pointer" data-chapter="1">
+                <div class="text-[11px] font-semibold text-aurelia-terracotta dark:text-orange-300 mb-1">Guide 02 · Gestes techniques (Lovenox)</div>
+                <div class="font-serif font-semibold text-base text-aurelia-ink dark:text-white">Réaliser une injection sous-cutanée</div>
+              </button>
+              <button type="button" class="video-chapter-btn text-left p-4 rounded-2xl border border-aurelia-border dark:border-aurelia-darkBorder bg-white/80 dark:bg-aurelia-darkCard hover:border-aurelia-eucalyptus transition-all cursor-pointer" data-chapter="2">
+                <div class="text-[11px] font-semibold text-aurelia-eucalyptus dark:text-emerald-300 mb-1">Guide 03 · Suivi au long cours (Coumadine)</div>
+                <div class="font-serif font-semibold text-base text-aurelia-ink dark:text-white">Alimentation & équilibre de l'INR</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Pied de page sobre -->
+    <footer class="editorial-header border-t border-aurelia-border dark:border-aurelia-darkBorder py-10 px-4 sm:px-6 text-xs text-aurelia-muted dark:text-stone-400">
+      <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="max-w-2xl leading-relaxed space-y-1.5">
+          <div class="font-serif font-semibold text-aurelia-ink dark:text-white text-base">Aurelia</div>
+          <p>Information pédagogique dédiée à une sélection de médicaments courants et de traitements encadrés. Ces repères facilitent l'échange avec votre médecin ou votre pharmacien mais ne remplacent pas un avis médical.</p>
+        </div>
+        <div class="text-[11px] text-aurelia-muted shrink-0">
+          © 2026 Aurelia
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const BASE_COMPLETE_MEDS = [
+      {
+        name: "Doliprane",
+        dci: "Paracétamol",
+        formula: "C₈H₉NO₂",
+        molType: "paracetamol",
+        category: "Médicament courant",
+        prescription: "Sans ordonnance",
+        source: "Référentiel Aurelia",
+        halfLife: "2h",
+        pkParams: { ka: 1.8, ke: 0.32, peak: 110, summary: "Pic d'action atteint environ 45 à 60 minutes après la prise, élimination progressive sur 6 heures." },
+        summary: "Un antalgique et antipyrétique de référence, bien toléré lorsqu'on respecte l'intervalle entre les prises et la dose maximale quotidienne.",
+        euBrands: ["FR: Doliprane, Dafalgan", "DE: Ben-u-ron", "IT: Tachipirina", "ES: Gelocatil"],
+        utilisation: "Soulage les douleurs légères à modérées (maux de tête, courbatures, douleurs dentaires) et fait baisser la fièvre.",
+        equivalent: "Dafalgan, Efferalgan, et génériques de paracétamol. Attention à ne pas les associer entre eux.",
+        naturel: "En cas de fièvre, pensez à bien vous hydrater et à découvrir la pièce. Le repos au calme soulage les céphalées légères.",
+        posologie: "Adulte (> 50 kg) : 500 mg à 1 g par prise, toutes les 4 à 6 heures, sans dépasser 3 g par 24h.",
+        contreIndications: "Maladie grave du foie ou allergie connue au paracétamol. Vérifiez l'absence de paracétamol dans vos autres traitements."
+      },
+      {
+        name: "Advil",
+        dci: "Ibuprofène",
+        formula: "C₁₃H₁₈O₂",
+        molType: "ibuprofen",
+        category: "Médicament courant",
+        prescription: "Sans ordonnance (200/400 mg)",
+        source: "Référentiel Aurelia",
+        halfLife: "2h",
+        pkParams: { ka: 1.4, ke: 0.34, peak: 105, summary: "Absorption rapide (1h à 2h), action anti-inflammatoire soutenue pendant 6 heures." },
+        summary: "Un anti-inflammatoire efficace sur les douleurs aiguës et la fièvre, à prendre de préférence au cours d'un repas.",
+        euBrands: ["FR: Advil, Nurofen", "DE: IbuHEXAL", "IT: Moment", "ES: Espidifen"],
+        utilisation: "Anti-inflammatoire utilisé contre la fièvre et les douleurs inflammatoires (entorse, rage de dents, migraine, règles douloureuses).",
+        equivalent: "Nurofen, Spedifen, Antarène, et génériques d'ibuprofène.",
+        naturel: "Pour une douleur articulaire légère, l'application de froid ou d'arnica en gel local peut suffire.",
+        posologie: "1 comprimé (200 ou 400 mg) au milieu d'un repas toutes les 6 heures si besoin (max 1 200 mg/jour).",
+        contreIndications: "À éviter en cas de grossesse (surtout dès le 6e mois), d'ulcère digestif, de varicelle ou sous anticoagulant."
+      },
+      {
+        name: "Spasfon",
+        dci: "Phloroglucinol",
+        formula: "C₆H₆O₃",
+        molType: "phloroglucinol",
+        category: "Médicament courant",
+        prescription: "Sans ordonnance",
+        source: "Référentiel Aurelia",
+        halfLife: "1h30",
+        pkParams: { ka: 2.2, ke: 0.45, peak: 95, summary: "Action rapide sur les fibres musculaires lisses (15 à 30 min) avec élimination rapide." },
+        summary: "Un antispasmodique doux qui agit directement sur les contractions douloureuses du ventre ou des voies urinaires.",
+        euBrands: ["FR: Spasfon", "UE: Antispasmodique sur conseil officinal"],
+        utilisation: "Calme les spasmes et les douleurs liées aux contractions du tube digestif, des voies urinaires ou gynécologiques.",
+        equivalent: "Génériques de Phloroglucinol, Débridat (sur ordonnance).",
+        naturel: "Une bouillotte chaude sur le ventre et des infusions de camomille ou menthe poivrée aident à détendre les spasmes.",
+        posologie: "Adulte : 2 comprimés au moment de la crise, à renouveler en respectant 2 heures d'intervalle (max 6 comprimés/jour).",
+        contreIndications: "Allergie connue au phloroglucinol. Déconseillé pendant l'allaitement."
+      },
+      {
+        name: "Amoxicilline",
+        dci: "Amoxicilline",
+        formula: "C₁₆H₁₉N₃O₅S",
+        molType: "amoxicillin",
+        category: "Traitement sur ordonnance",
+        prescription: "Ordonnance obligatoire",
+        source: "Référentiel Aurelia",
+        halfLife: "1h15",
+        pkParams: { ka: 1.6, ke: 0.48, peak: 115, summary: "Diffusion rapide dans les tissus infectés ; nécessite des prises régulières pour maintenir un seuil bactéricide." },
+        summary: "Antibiotique de la famille des pénicillines ciblant les infections bactériennes. La durée prescrite doit être menée à son terme.",
+        euBrands: ["FR: Clamoxyl", "DE: AmoxiHEXAL", "IT: Zimox", "ES: Clamoxyl"],
+        utilisation: "Antibiotique prescrit pour traiter certaines infections bactériennes (angine bactérienne, otite, infection dentaire).",
+        equivalent: "Clamoxyl, ou associé à l'acide clavulanique (Augmentin).",
+        naturel: "La prise de probiotiques (Saccharomyces boulardii) à distance de 2 heures aide à préserver la flore intestinale.",
+        posologie: "En général 1 g matin et soir pendant 5 à 7 jours. Poursuivez jusqu'au bout de l'ordonnance.",
+        contreIndications: "Allergie connue aux pénicillines ou aux céphalosporines."
+      },
+      {
+        name: "Coumadine",
+        dci: "Warfarine sodique",
+        formula: "C₁₉H₁₅NaO₄",
+        molType: "warfarin",
+        category: "Suivi spécialisé",
+        prescription: "Ordonnance obligatoire",
+        source: "Référentiel Aurelia",
+        halfLife: "40h",
+        pkParams: { ka: 0.9, ke: 0.04, peak: 88, summary: "Demi-vie longue (36 à 42h) assurant une anticoagulation stable et continue sur 24 heures." },
+        summary: "Anticoagulant oral majeur nécessitant une prise à heure fixe et un suivi régulier de la coagulation par prise de sang (INR).",
+        euBrands: ["FR: Coumadine", "DE: Marevan", "IT: Coumadin", "ES: Aldocumar"],
+        utilisation: "Anticoagulant oral qui fluidifie le sang afin d'éviter la formation de caillots (phlébite, embolie pulmonaire).",
+        equivalent: "Sintrom (acénocoumarol) ou anticoagulants oraux directs (Eliquis), uniquement sur décision médicale.",
+        naturel: "Aucun substitut naturel. Gardez un apport régulier en légumes verts (vitamine K) et évitez le millepertuis.",
+        posologie: "Une prise par jour à heure fixe (souvent le soir), ajustée selon votre bilan sanguin (INR).",
+        contreIndications: "Évitez toute automédication (aspirine, anti-inflammatoires) qui augmente le risque hémorragique."
+      },
+      {
+        name: "Lovenox",
+        dci: "Énoxaparine sodique",
+        formula: "HBPM · Oligosaccharide",
+        molType: "enoxaparin",
+        category: "Suivi spécialisé",
+        prescription: "Ordonnance obligatoire",
+        source: "Référentiel Aurelia",
+        halfLife: "4h30",
+        pkParams: { ka: 0.85, ke: 0.16, peak: 102, summary: "Biodisponibilité sous-cutanée proche de 100%, pic d'activité anti-Xa atteint 3 à 5 heures après l'injection." },
+        summary: "Anticoagulant injectable sous-cutané utilisé en prévention ou traitement des thromboses veineuses.",
+        euBrands: ["FR: Lovenox", "DE: Clexane", "IT: Clexane"],
+        utilisation: "Anticoagulant administré par injection sous-cutanée pour prévenir ou traiter rapidement un caillot sanguin.",
+        equivalent: "Autres héparines de bas poids moléculaire (Innohep, Fraxiparine).",
+        naturel: "Aucun substitut naturel. Une surveillance des plaquettes sanguines peut être prescrite.",
+        posologie: "1 à 2 injections par jour sous la peau (dans le ventre), à heures régulières.",
+        contreIndications: "Ne pas associer sans avis médical à d'autres médicaments agissant sur la coagulation."
+      },
+      {
+        name: "Cordarone",
+        dci: "Amiodarone",
+        formula: "C₂₅H₂₉I₂NO₃",
+        molType: "amiodarone",
+        category: "Suivi spécialisé",
+        prescription: "Ordonnance obligatoire",
+        source: "Référentiel Aurelia",
+        halfLife: "50 jours",
+        pkParams: { ka: 0.7, ke: 0.02, peak: 85, summary: "Imprégnation tissulaire très progressive et effet antiarythmique prolongé dans le temps." },
+        summary: "Traitement antiarythmique de référence pour stabiliser le rythme cardiaque, accompagné d'une protection solaire indispensable.",
+        euBrands: ["FR: Cordarone", "DE: Cordarex", "IT: Cordarone"],
+        utilisation: "Médicament régulateur du rythme cardiaque prescrit pour prévenir ou corriger certains troubles du rythme.",
+        equivalent: "Sotalol, Flécaïnide, uniquement sur avis de votre cardiologue.",
+        naturel: "Aucun substitut naturel. Protégez systématiquement votre peau du soleil (indice 50+).",
+        posologie: "Dose d'attaque puis dose d'entretien quotidienne définie par votre cardiologue.",
+        contreIndications: "Troubles de la thyroïde non traités, bradycardie sévère, grossesse."
+      }
+    ];
+
+    let currentMedication = BASE_COMPLETE_MEDS[0];
+    let lenisInstance = null;
+
+    // =========================================================================
+    // 0. FOND DYNAMIQUE PILOTÉ PAR LE SCROLL (Canvas Moléculaire + Parallaxe)
+    // =========================================================================
+    (function initScrollDynamicBackground() {
+      const canvas = document.getElementById('scroll-bg-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      let width = canvas.width = window.innerWidth;
+      let height = canvas.height = window.innerHeight;
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      // Grappes hexagonales réparties dans l'espace vertical
+      const clusters = [
+        { rx: 0.14, ry: 0.22, baseR: 68, speed: 0.6, rotSpeed: 0.4, colorType: 'sage' },
+        { rx: 0.86, ry: 0.35, baseR: 92, speed: 0.9, rotSpeed: -0.35, colorType: 'gold' },
+        { rx: 0.20, ry: 0.68, baseR: 78, speed: 1.1, rotSpeed: 0.5, colorType: 'terracotta' },
+        { rx: 0.82, ry: 0.78, baseR: 64, speed: 0.75, rotSpeed: -0.45, colorType: 'sage' }
+      ];
+
+      let smoothScroll = 0;
+
+      function drawHexagonCluster(cx, cy, radius, angle, alpha, colorRgb) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+
+        // Cycle principal
+        ctx.strokeStyle = `rgba(${colorRgb}, ${alpha})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i * Math.PI) / 3;
+          const x = Math.cos(a) * radius;
+          const y = Math.sin(a) * radius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        // Cycle intérieur en pointillés
+        ctx.setLineDash([3, 5]);
+        ctx.strokeStyle = `rgba(${colorRgb}, ${alpha * 0.65})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.56, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Ramifications externes et sommets
+        for (let i = 0; i < 6; i += 2) {
+          const a = (i * Math.PI) / 3;
+          const x1 = Math.cos(a) * radius;
+          const y1 = Math.sin(a) * radius;
+          const x2 = Math.cos(a) * (radius * 1.45);
+          const y2 = Math.sin(a) * (radius * 1.45);
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+
+          ctx.fillStyle = `rgba(${colorRgb}, ${alpha * 1.5})`;
+          ctx.beginPath();
+          ctx.arc(x2, y2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function renderBackground() {
+        const targetScroll = window.scrollY;
+        smoothScroll += (targetScroll - smoothScroll) * 0.08;
+
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - height);
+        const progress = Math.min(1, Math.max(0, smoothScroll / maxScroll));
+        const isDark = document.documentElement.classList.contains('dark');
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Ligne de connexion fluide traversant le fond selon le scroll
+        ctx.save();
+        ctx.strokeStyle = isDark ? 'rgba(110, 231, 183, 0.06)' : 'rgba(27, 77, 62, 0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let y = 0; y <= height; y += 24) {
+          const wave = Math.sin(y * 0.004 + progress * Math.PI * 3) * (60 + progress * 40);
+          const x = width * 0.5 + wave;
+          if (y === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Rendu des structures moléculaires en parallaxe
+        clusters.forEach((c, idx) => {
+          const parallaxY = ((c.ry * height - smoothScroll * c.speed * 0.35) % (height + 240) + (height + 240)) % (height + 240) - 120;
+          const driftX = Math.sin(progress * Math.PI * 2 + idx) * 28;
+          const cx = c.rx * width + driftX;
+          const dynamicRadius = c.baseR * (0.9 + Math.sin(progress * Math.PI + idx) * 0.18);
+          const angle = progress * Math.PI * 2.5 * c.rotSpeed + idx * 0.7;
+
+          let rgb = isDark ? '110, 231, 183' : '27, 77, 62';
+          if (c.colorType === 'gold') rgb = isDark ? '217, 179, 114' : '181, 137, 76';
+          if (c.colorType === 'terracotta') rgb = isDark ? '251, 146, 60' : '196, 99, 71';
+
+          const alpha = isDark ? 0.11 : 0.13;
+          drawHexagonCluster(cx, parallaxY, dynamicRadius, angle, alpha, rgb);
+        });
+
+        requestAnimationFrame(renderBackground);
+      }
+
+      requestAnimationFrame(renderBackground);
+    })();
+
+    // =========================================================================
+    // 1. VISUALISEUR 3D WEBGL INTERACTIF
+    // =========================================================================
+    (function initInteractive3DMolecule() {
+      const container = document.getElementById('molecule-3d-viewport');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(0, 0, 9.5);
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+      const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+      keyLight.position.set(6, 8, 8);
+      scene.add(keyLight);
+      const fillLight = new THREE.DirectionalLight(0xb5894c, 0.45);
+      fillLight.position.set(-6, -4, 4);
+      scene.add(fillLight);
+
+      const moleculeGroup = new THREE.Group();
+      scene.add(moleculeGroup);
+
+      const MOL_3D_DATA = {
+        paracetamol: {
+          atoms: [
+            [0, 1.1, 0, 'C'], [0.95, 0.55, 0.08, 'C'], [0.95, -0.55, -0.08, 'C'],
+            [0, -1.1, 0, 'C'], [-0.95, -0.55, 0.08, 'C'], [-0.95, 0.55, -0.08, 'C'],
+            [0, 2.1, 0.15, 'O'], [0, -2.1, -0.1, 'N'], [0.9, -2.7, 0.2, 'C'],
+            [0.9, -3.6, 0.4, 'O'], [1.85, -2.2, 0.15, 'C']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[3,7],[7,8],[8,9],[8,10]]
+        },
+        ibuprofen: {
+          atoms: [
+            [0, 1.1, 0, 'C'], [0.95, 0.55, 0.1, 'C'], [0.95, -0.55, -0.1, 'C'],
+            [0, -1.1, 0, 'C'], [-0.95, -0.55, 0.1, 'C'], [-0.95, 0.55, -0.1, 'C'],
+            [0, 2.1, 0.25, 'C'], [-0.8, 2.8, -0.2, 'C'], [-1.7, 2.5, 0.3, 'C'], [-0.6, 3.7, -0.4, 'C'],
+            [0, -2.1, -0.15, 'C'], [-0.85, -2.6, 0.4, 'C'], [0.9, -2.6, -0.3, 'C'],
+            [0.9, -3.5, -0.5, 'O'], [1.8, -2.1, -0.2, 'O']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[6,7],[7,8],[7,9],[3,10],[10,11],[10,12],[12,13],[12,14]]
+        },
+        phloroglucinol: {
+          atoms: [
+            [0, 1.15, 0, 'C'], [1.0, 0.58, 0.05, 'C'], [1.0, -0.58, -0.05, 'C'],
+            [0, -1.15, 0, 'C'], [-1.0, -0.58, 0.05, 'C'], [-1.0, 0.58, -0.05, 'C'],
+            [0, 2.2, 0.1, 'O'], [1.9, -1.1, -0.1, 'O'], [-1.9, -1.1, 0.1, 'O']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[2,7],[4,8]]
+        },
+        warfarin: {
+          atoms: [
+            [-1.5, 0.55, 0, 'C'], [-0.55, 1.1, 0.1, 'C'], [0.4, 0.55, 0, 'C'],
+            [0.4, -0.55, -0.1, 'C'], [-0.55, -1.1, 0, 'C'], [-1.5, -0.55, 0.1, 'C'],
+            [1.35, 1.1, 0.15, 'O'], [2.3, 0.55, 0, 'C'], [2.3, -0.55, -0.15, 'C'], [1.35, -1.1, -0.1, 'C'],
+            [3.2, 1.1, 0.1, 'O'], [1.35, -2.1, -0.2, 'O'], [3.2, -1.1, 0.4, 'C'], [4.0, -0.5, 0.9, 'C'], [3.8, -2.0, -0.2, 'N']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[2,6],[6,7],[7,8],[8,9],[9,3],[7,10],[9,11],[8,12],[12,13],[12,14]]
+        },
+        amoxicillin: {
+          atoms: [
+            [-2.2, 0.55, 0, 'C'], [-1.25, 1.1, 0.1, 'C'], [-0.3, 0.55, 0, 'C'],
+            [-0.3, -0.55, -0.1, 'C'], [-1.25, -1.1, 0, 'C'], [-2.2, -0.55, 0.1, 'C'],
+            [-3.1, 0, 0.15, 'O'], [0.65, 0, 0.25, 'C'], [1.5, 0.65, -0.1, 'N'],
+            [2.4, 0, 0.15, 'C'], [2.4, -1.0, 0.3, 'C'], [1.5, -1.0, 0.1, 'N'], [3.3, -0.5, -0.2, 'O']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[5,6],[3,7],[7,8],[8,9],[9,10],[10,11],[11,8],[9,12]]
+        },
+        enoxaparin: {
+          atoms: [
+            [-2.1, 0, 0.2, 'O'], [-1.3, 0.75, -0.1, 'C'], [-0.3, 0.75, 0.15, 'C'],
+            [0.2, -0.1, -0.1, 'C'], [-0.6, -0.85, 0.2, 'C'], [-1.6, -0.85, -0.15, 'C'],
+            [1.2, -0.1, 0.25, 'O'], [2.0, 0.65, -0.1, 'C'], [3.0, 0.65, 0.15, 'C'],
+            [3.5, -0.2, -0.15, 'C'], [2.7, -0.95, 0.2, 'C'], [1.7, -0.95, -0.1, 'C'],
+            [-0.3, 1.75, 0.3, 'O'], [3.0, 1.65, 0.3, 'O']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[3,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,6],[2,12],[8,13]]
+        },
+        amiodarone: {
+          atoms: [
+            [-2.2, 0.55, 0, 'C'], [-1.25, 1.1, 0.1, 'C'], [-0.3, 0.55, 0, 'C'],
+            [-0.3, -0.55, -0.1, 'C'], [-1.25, -1.1, 0, 'C'], [-2.2, -0.55, 0.1, 'C'],
+            [0.7, 0.9, 0.2, 'O'], [1.35, 0, -0.1, 'C'], [0.7, -0.9, 0.1, 'C'],
+            [2.35, 0, 0.2, 'C'], [3.1, 0.85, -0.15, 'C'], [4.1, 0.4, 0.1, 'C'],
+            [4.1, -0.6, -0.1, 'C'], [3.1, -1.05, 0.15, 'C'], [4.95, 0.9, 0.25, 'O'], [4.95, -1.1, -0.25, 'O']
+          ],
+          bonds: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[2,6],[6,7],[7,8],[8,3],[7,9],[9,10],[10,11],[11,12],[12,13],[13,10],[11,14],[12,15]]
+        }
+      };
+
+      const materials = {
+        C: new THREE.MeshStandardMaterial({ color: 0x1b4d3e, roughness: 0.3, metalness: 0.1 }),
+        O: new THREE.MeshStandardMaterial({ color: 0xc46347, roughness: 0.3, metalness: 0.1 }),
+        N: new THREE.MeshStandardMaterial({ color: 0xb5894c, roughness: 0.3, metalness: 0.1 })
+      };
+      const bondMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, transparent: true, opacity: 0.65 });
+
+      let viewStyle = 'sticks';
+      let currentMolType = 'paracetamol';
+
+      function buildMoleculeMesh(molType) {
+        currentMolType = molType;
+        while (moleculeGroup.children.length > 0) moleculeGroup.remove(moleculeGroup.children[0]);
+
+        const data = MOL_3D_DATA[molType] || MOL_3D_DATA.paracetamol;
+        const atomScale = viewStyle === 'spheres' ? 0.58 : 0.26;
+
+        let sumX = 0, sumY = 0, sumZ = 0;
+        data.atoms.forEach(a => { sumX += a[0]; sumY += a[1]; sumZ += a[2]; });
+        const cx = sumX / data.atoms.length, cy = sumY / data.atoms.length, cz = sumZ / data.atoms.length;
+        const centeredAtoms = data.atoms.map(a => [a[0] - cx, a[1] - cy, a[2] - cz, a[3]]);
+
+        centeredAtoms.forEach(([x, y, z, el]) => {
+          const mesh = new THREE.Mesh(new THREE.SphereGeometry(atomScale, 24, 24), materials[el] || materials.C);
+          mesh.position.set(x, y, z);
+          moleculeGroup.add(mesh);
+        });
+
+        if (viewStyle === 'sticks') {
+          data.bonds.forEach(([i, j]) => {
+            const p1 = new THREE.Vector3(...centeredAtoms[i].slice(0, 3));
+            const p2 = new THREE.Vector3(...centeredAtoms[j].slice(0, 3));
+            const dist = p1.distanceTo(p2);
+            const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, dist, 12), bondMat);
+            cyl.position.copy(p1).add(p2).multiplyScalar(0.5);
+            cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+            moleculeGroup.add(cyl);
+          });
+        }
+
+        const autoScale = data.atoms.length > 13 ? 0.85 : 1.05;
+        moleculeGroup.scale.set(autoScale, autoScale, autoScale);
+
+        if (typeof gsap !== 'undefined') {
+          gsap.fromTo(moleculeGroup.scale, { x: autoScale * 0.8, y: autoScale * 0.8, z: autoScale * 0.8 }, { x: autoScale, y: autoScale, z: autoScale, duration: 0.6, ease: "back.out(1.4)" });
+        }
+      }
+
+      window.update3DMolecule = (molType) => buildMoleculeMesh(molType);
+
+      const btnSticks = document.getElementById('mol-style-sticks');
+      const btnSpheres = document.getElementById('mol-style-spheres');
+
+      btnSticks.addEventListener('click', () => {
+        viewStyle = 'sticks';
+        btnSticks.className = "px-2 py-1 rounded bg-aurelia-eucalyptus text-white font-medium cursor-pointer transition-colors";
+        btnSpheres.className = "px-2 py-1 rounded text-aurelia-muted hover:text-aurelia-ink dark:hover:text-white font-medium cursor-pointer transition-colors";
+        buildMoleculeMesh(currentMolType);
+      });
+
+      btnSpheres.addEventListener('click', () => {
+        viewStyle = 'spheres';
+        btnSpheres.className = "px-2 py-1 rounded bg-aurelia-eucalyptus text-white font-medium cursor-pointer transition-colors";
+        btnSticks.className = "px-2 py-1 rounded text-aurelia-muted hover:text-aurelia-ink dark:hover:text-white font-medium cursor-pointer transition-colors";
+        buildMoleculeMesh(currentMolType);
+      });
+
+      let isDragging = false, prevX = 0, prevY = 0;
+      container.addEventListener('pointerdown', (e) => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+      window.addEventListener('pointerup', () => { isDragging = false; });
+      window.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        moleculeGroup.rotation.y += (e.clientX - prevX) * 0.012;
+        moleculeGroup.rotation.x += (e.clientY - prevY) * 0.012;
+        prevX = e.clientX; prevY = e.clientY;
+      });
+
+      window.addEventListener('resize', () => {
+        if (!container.clientWidth) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        if (!isDragging) moleculeGroup.rotation.y += 0.005;
+        renderer.render(scene, camera);
+      }
+      animate();
+    })();
+
+    // =========================================================================
+    // 2. COURBE PHARMACOCINÉTIQUE SVG
+    // =========================================================================
+    let pkMultiDose = false;
+
+    function renderPharmacokineticChart() {
+      const pathEl = document.getElementById('pk-curve-path');
+      const areaEl = document.getElementById('pk-curve-area');
+      const pk = currentMedication.pkParams || { ka: 1.5, ke: 0.3, peak: 100, summary: "Diffusion progressive sur 24h." };
+
+      document.getElementById('pk-drug-name').textContent = currentMedication.name;
+      document.getElementById('pk-summary-text').textContent = pk.summary;
+      document.getElementById('pk-halflife-badge').textContent = `Demi-vie (t½) : ${currentMedication.halfLife || '~4h'}`;
+
+      const startX = 60, endX = 770, baseY = 200, steps = 120;
+      let dPath = "";
+
+      for (let i = 0; i <= steps; i++) {
+        const t = (i / steps) * 24;
+        const x = startX + (i / steps) * (endX - startX);
+        const calcDose = (offset) => offset < 0 ? 0 : Math.max(0, Math.exp(-pk.ke * offset) - Math.exp(-pk.ka * offset));
+
+        let conc = calcDose(t);
+        if (pkMultiDose) conc += calcDose(t - 6) + calcDose(t - 12) + calcDose(t - 18);
+
+        const normalized = Math.min(1.45, conc * (pkMultiDose ? 1.15 : 1.45));
+        const y = baseY - normalized * pk.peak;
+        dPath += (i === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : ` L ${x.toFixed(1)} ${y.toFixed(1)}`);
+      }
+
+      pathEl.setAttribute('d', dPath);
+      areaEl.setAttribute('d', `${dPath} L ${endX} ${baseY} L ${startX} ${baseY} Z`);
+    }
+
+    document.getElementById('pk-mode-single').addEventListener('click', (e) => {
+      pkMultiDose = false;
+      e.target.className = "px-3.5 py-2 rounded-xl bg-aurelia-eucalyptus text-white font-semibold cursor-pointer transition-colors";
+      document.getElementById('pk-mode-multi').className = "px-3.5 py-2 rounded-xl bg-aurelia-cream dark:bg-aurelia-darkBg text-aurelia-ink dark:text-stone-300 border border-aurelia-border dark:border-aurelia-darkBorder font-medium cursor-pointer transition-colors";
+      renderPharmacokineticChart();
+    });
+
+    document.getElementById('pk-mode-multi').addEventListener('click', (e) => {
+      pkMultiDose = true;
+      e.target.className = "px-3.5 py-2 rounded-xl bg-aurelia-eucalyptus text-white font-semibold cursor-pointer transition-colors";
+      document.getElementById('pk-mode-single').className = "px-3.5 py-2 rounded-xl bg-aurelia-cream dark:bg-aurelia-darkBg text-aurelia-ink dark:text-stone-300 border border-aurelia-border dark:border-aurelia-darkBorder font-medium cursor-pointer transition-colors";
+      renderPharmacokineticChart();
+    });
+
+    // =========================================================================
+    // 3. ANALYSEUR COMBINATOIRE D'ORDONNANCE
+    // =========================================================================
+    const RX_CATALOG = {
+      "Doliprane": { dci: "Paracétamol", class: "Antalgique" },
+      "Fervex (Paracétamol)": { dci: "Paracétamol", class: "Antalgique / Rhume" },
+      "Advil": { dci: "Ibuprofène", class: "AINS" },
+      "Spasfon": { dci: "Phloroglucinol", class: "Antispasmodique" },
+      "Coumadine": { dci: "Warfarine", class: "AVK" },
+      "Lovenox": { dci: "Énoxaparine", class: "Héparine" },
+      "Cordarone": { dci: "Amiodarone", class: "Antiarythmique" },
+      "Amoxicilline": { dci: "Amoxicilline", class: "Antibiotique" },
+      "Millepertuis": { dci: "Hypericum", class: "Inducteur CYP3A4" }
+    };
+
+    let rxBasket = JSON.parse(localStorage.getItem('aurelia_rx_basket') || '["Doliprane"]');
+
+    function saveAndAnalyzeRx() {
+      localStorage.setItem('aurelia_rx_basket', JSON.stringify(rxBasket));
+      document.getElementById('rx-count').textContent = rxBasket.length;
+      document.getElementById('header-rx-badge').textContent = rxBasket.length;
+
+      const basketEl = document.getElementById('rx-basket-list');
+      if (rxBasket.length === 0) {
+        basketEl.innerHTML = `<div class="p-4 rounded-2xl border border-dashed border-aurelia-border dark:border-aurelia-darkBorder text-xs text-aurelia-muted text-center">Aucun médicament dans votre liste. Ajoutez-en un ci-dessus.</div>`;
+      } else {
+        basketEl.innerHTML = rxBasket.map((name, idx) => {
+          const meta = RX_CATALOG[name] || { dci: name, class: "Traitement" };
+          return `
+            <div class="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white dark:bg-aurelia-darkCard border border-aurelia-border dark:border-aurelia-darkBorder text-xs">
+              <div>
+                <span class="font-semibold text-aurelia-ink dark:text-white">${name}</span>
+                <span class="text-aurelia-muted ml-1.5">(${meta.dci})</span>
+              </div>
+              <button type="button" class="rx-remove-btn text-aurelia-muted hover:text-aurelia-terracotta font-bold px-2 cursor-pointer" data-idx="${idx}">✕</button>
+            </div>
+          `;
+        }).join('');
+
+        basketEl.querySelectorAll('.rx-remove-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            rxBasket.splice(parseInt(btn.dataset.idx, 10), 1);
+            saveAndAnalyzeRx();
+          });
+        });
+      }
+
+      const resultsEl = document.getElementById('rx-analysis-results');
+      if (rxBasket.length < 2) {
+        resultsEl.innerHTML = `<div class="p-4 rounded-2xl bg-aurelia-cream/60 dark:bg-aurelia-darkBg text-xs text-aurelia-muted">Sélectionnez au moins <strong>2 produits</strong> pour lancer l'analyse des interactions croisées.</div>`;
+        return;
+      }
+
+      const alerts = [];
+      for (let i = 0; i < rxBasket.length; i++) {
+        for (let j = i + 1; j < rxBasket.length; j++) {
+          const a = RX_CATALOG[rxBasket[i]] || { dci: rxBasket[i], class: "" };
+          const b = RX_CATALOG[rxBasket[j]] || { dci: rxBasket[j], class: "" };
+          const pair = `${rxBasket[i]} + ${rxBasket[j]}`;
+
+          if (a.dci === b.dci) {
+            alerts.push({ level: "danger", title: `Doublon de principe actif (${a.dci})`, desc: `${pair} contiennent la même molécule. Ne les cumulez pas afin d'éviter un surdosage.` });
+          } else if ((a.class === "AVK" || a.class === "Héparine") && b.class === "AINS" || (b.class === "AVK" || b.class === "Héparine") && a.class === "AINS") {
+            alerts.push({ level: "danger", title: `Risque hémorragique majeur`, desc: `${pair} : l'association d'un anticoagulant et d'un anti-inflammatoire (ibuprofène) augmente fortement le risque de saignement.` });
+          } else if ((a.dci === "Warfarine" || a.dci === "Amiodarone") && b.dci === "Hypericum" || (b.dci === "Warfarine" || b.dci === "Amiodarone") && a.dci === "Hypericum") {
+            alerts.push({ level: "danger", title: `Association contre-indiquée`, desc: `${pair} : le millepertuis réduit drastiquement l'efficacité de votre traitement de fond.` });
+          } else if ((a.dci === "Warfarine" && b.dci === "Amoxicilline") || (b.dci === "Warfarine" && a.dci === "Amoxicilline")) {
+            alerts.push({ level: "warn", title: `Surveillance INR renforcée`, desc: `${pair} : l'antibiotique peut modifier l'équilibre de votre anticoagulant. Un contrôle biologique peut être requis.` });
+          }
+        }
+      }
+
+      if (alerts.length === 0) {
+        resultsEl.innerHTML = `
+          <div class="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-aurelia-eucalyptus dark:text-emerald-200">
+            <div class="font-bold mb-1">✓ Aucune incompatibilité majeure détectée</div>
+            <p>Les ${rxBasket.length} produits sélectionnés ne présentent pas d'interaction connue dans notre référentiel. Respectez toujours les horaires de prise de chaque médicament.</p>
+          </div>
+        `;
+      } else {
+        resultsEl.innerHTML = alerts.map(al => `
+          <div class="p-4 rounded-2xl ${al.level === 'danger' ? 'bg-aurelia-terracottaBg dark:bg-orange-950/40 border-aurelia-terracotta/40 text-aurelia-terracotta dark:text-orange-200' : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 text-amber-900 dark:text-amber-200'} border text-xs">
+            <div class="font-bold mb-1">⚠ ${al.title}</div>
+            <p class="leading-relaxed opacity-90">${al.desc}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    document.querySelectorAll('.rx-add-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.dataset.item;
+        if (!rxBasket.includes(item)) { rxBasket.push(item); saveAndAnalyzeRx(); }
+      });
+    });
+
+    document.getElementById('add-to-rx-btn').addEventListener('click', () => {
+      if (!rxBasket.includes(currentMedication.name)) { rxBasket.push(currentMedication.name); saveAndAnalyzeRx(); }
+      const target = document.getElementById('analyseur-ordonnance');
+      if (lenisInstance) lenisInstance.scrollTo(target, { offset: -80 });
+      else target.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('clear-rx-btn').addEventListener('click', () => { rxBasket = []; saveAndAnalyzeRx(); });
+
+    document.getElementById('export-rx-json').addEventListener('click', () => {
+      const payload = { plateforme: "Aurelia", date: new Date().toISOString(), ordonnance: rxBasket };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Aurelia_Ordonnance.json`; a.click();
+    });
+
+    document.getElementById('export-rx-csv').addEventListener('click', () => {
+      const rows = ["Medicament;DCI;Classe", ...rxBasket.map(n => {
+        const m = RX_CATALOG[n] || { dci: n, class: "Autre" };
+        return `"${n}";"${m.dci}";"${m.class}"`;
+      })];
+      const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Aurelia_Ordonnance.csv`; a.click();
+    });
+
+    // =========================================================================
+    // 4. SYNTHÈSE VOCALE & RECHERCHE HYBRIDE
+    // =========================================================================
+    document.getElementById('speak-sheet-btn').addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) { alert("La synthèse vocale n'est pas supportée sur ce navigateur."); return; }
+      const label = document.getElementById('speak-btn-label');
+      if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); label.textContent = "Écouter"; return; }
+      const text = `${currentMedication.name}, substance active ${currentMedication.dci}. ${currentMedication.utilisation} Posologie : ${currentMedication.posologie}`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'fr-FR'; utterance.rate = 0.98;
+      utterance.onend = () => { label.textContent = "Écouter"; };
+      label.textContent = "Arrêter";
+      window.speechSynthesis.speak(utterance);
+    });
+
+    const searchInput = document.getElementById('drug-search-input');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const submitBtn = document.getElementById('search-submit-btn');
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    const weightInput = document.getElementById('patient-weight-input');
+
+    async function fetchExternalDrugAPI(query) {
+      const btnText = document.getElementById('search-btn-text');
+      btnText.textContent = "Recherche...";
+      try {
+        const res = await fetch(`https://rxnav.nlm.nih.gov/REST/drugs.json?name=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        const groups = data?.drugGroup?.conceptGroup || [];
+        let foundName = null, rxcui = null;
+
+        for (const g of groups) {
+          if (g.conceptProperties && g.conceptProperties.length > 0) {
+            foundName = g.conceptProperties[0].name;
+            rxcui = g.conceptProperties[0].rxcui;
+            break;
+          }
+        }
+
+        if (foundName) {
+          const apiMed = {
+            name: query.charAt(0).toUpperCase() + query.slice(1),
+            dci: foundName,
+            formula: `RxCUI : ${rxcui}`,
+            molType: "paracetamol",
+            category: "Index International",
+            prescription: "Selon réglementation locale",
+            source: "Base RxNorm · NIH",
+            halfLife: "Variable",
+            pkParams: { ka: 1.3, ke: 0.25, peak: 98, summary: "Profil pharmacocinétique standard issu de la base internationale RxNorm." },
+            summary: `Spécialité référencée sous l'identifiant clinique RxCUI ${rxcui}. Consultez un professionnel de santé pour la posologie adaptée.`,
+            euBrands: [`DCI : ${foundName.split(' ')[0]}`],
+            utilisation: `Substance active identifiée : ${foundName}. Indication thérapeutique validée dans les registres internationaux.`,
+            equivalent: `Génériques contenant la même substance active (${foundName.split(' ')[0]}).`,
+            naturel: "Demandez conseil à votre pharmacien avant d'associer des plantes ou compléments alimentaires.",
+            posologie: "Se conformer strictement à la prescription médicale ou à la notice de la spécialité.",
+            contreIndications: "Vérifiez les antécédents allergiques et les interactions avec votre traitement habituel."
+          };
+          renderMedication(apiMed, true);
+        } else {
+          alert(`Aucun résultat trouvé dans le référentiel Aurelia ni sur la base RxNorm pour "${query}".`);
+        }
+      } catch (err) {
+        alert("Erreur de connexion à la base externe. Vérifiez votre accès réseau.");
+      } finally {
+        btnText.textContent = "Consulter";
+      }
+    }
+
+    function updateDOMContent(med) {
+      currentMedication = med;
+      document.getElementById('drug-category-badge').textContent = med.category;
+      document.getElementById('drug-prescription-badge').textContent = med.prescription;
+      document.getElementById('drug-formula-badge').textContent = med.formula;
+      document.getElementById('drug-source-badge').textContent = med.source || "Référentiel Aurelia";
+      document.getElementById('drug-title').textContent = `${med.name} — ${med.dci.split(' ')[0]}`;
+      document.getElementById('drug-subtitle').innerHTML = `Substance active : <span class="font-medium text-aurelia-ink dark:text-stone-200">${med.dci}</span>`;
+      document.getElementById('drug-summary-lead').textContent = med.summary;
+
+      document.getElementById('eu-brands-list').innerHTML = med.euBrands.map(b =>
+        `<span class="px-2.5 py-1 rounded-lg bg-aurelia-cream/80 dark:bg-aurelia-darkBg text-aurelia-ink dark:text-stone-300 border border-aurelia-border dark:border-aurelia-darkBorder text-[11px]">${b}</span>`
+      ).join('');
+
+      document.getElementById('card-utilisation').textContent = med.utilisation;
+      document.getElementById('card-equivalent').textContent = med.equivalent;
+      document.getElementById('card-naturel').textContent = med.naturel;
+      document.getElementById('card-posologie').textContent = med.posologie;
+      document.getElementById('card-contre-indications').textContent = med.contreIndications;
+
+      updateCalculatedDose();
+      renderPharmacokineticChart();
+      if (window.update3DMolecule) window.update3DMolecule(med.molType);
+    }
+
+    function renderMedication(med, animate = true) {
+      if (!animate || typeof gsap === 'undefined') { updateDOMContent(med); return; }
+      const cards = document.querySelectorAll('#cards-grid .aurelia-card');
+      gsap.to(cards, {
+        opacity: 0, y: 8, duration: 0.2, ease: "power2.in",
+        onComplete: () => {
+          updateDOMContent(med);
+          gsap.fromTo(cards, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, stagger: 0.05, ease: "power3.out" });
+        }
+      });
+    }
+
+    function updateCalculatedDose() {
+      const weight = parseFloat(weightInput.value) || 70;
+      const badge = document.getElementById('calculated-dose-badge');
+      if (currentMedication.name === "Doliprane") {
+        const dosePrise = Math.min(Math.round(weight * 15), 1000);
+        const doseMax = Math.min(Math.round(weight * 60), 3000);
+        badge.textContent = `≈ ${dosePrise} mg / prise (max ${doseMax} mg/j)`;
+      } else if (currentMedication.name === "Advil") {
+        const dosePrise = weight < 40 ? `${Math.round(weight * 7)} mg` : "200 à 400 mg";
+        badge.textContent = `Repère : ${dosePrise} par prise`;
+      } else {
+        badge.textContent = `Repère pour ${weight} kg (selon ordonnance)`;
+      }
+    }
+
+    weightInput.addEventListener('input', updateCalculatedDose);
+
+    function searchLocalDB(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) return [];
+      return BASE_COMPLETE_MEDS.filter(m => `${m.name} ${m.dci} ${m.category}`.toLowerCase().includes(q));
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      clearBtn.classList.toggle('hidden', !val);
+      const matches = searchLocalDB(val);
+      if (!val.trim()) { dropdown.classList.add('hidden'); return; }
+      let html = matches.map(m => `
+        <button type="button" class="autocomplete-item w-full px-4 py-3.5 hover:bg-aurelia-cream/60 dark:hover:bg-aurelia-darkBg flex items-center justify-between border-b border-aurelia-border/50 dark:border-aurelia-darkBorder text-left transition-colors cursor-pointer" data-name="${m.name}">
+          <div>
+            <div class="text-sm font-semibold text-aurelia-ink dark:text-white">${m.name} <span class="font-normal text-aurelia-muted">· ${m.dci}</span></div>
+            <div class="text-xs text-aurelia-muted mt-0.5 line-clamp-1">${m.utilisation}</div>
+          </div>
+          <span class="text-[11px] px-2.5 py-1 rounded-full bg-aurelia-cream dark:bg-aurelia-darkBg text-aurelia-eucalyptus dark:text-emerald-300 shrink-0 ml-2">${m.category}</span>
+        </button>
+      `).join('');
+
+      html += `
+        <button type="button" id="trigger-api-fallback" class="w-full px-4 py-3 bg-aurelia-cream/40 dark:bg-aurelia-darkBg/80 hover:bg-aurelia-cream text-left text-xs font-medium text-aurelia-eucalyptus dark:text-emerald-300 flex items-center justify-between cursor-pointer">
+          <span>Rechercher « ${val} » dans l'index international</span>
+          <span>→</span>
+        </button>
+      `;
+
+      dropdown.innerHTML = html;
+      dropdown.classList.remove('hidden');
+
+      dropdown.querySelectorAll('.autocomplete-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const found = BASE_COMPLETE_MEDS.find(m => m.name === btn.dataset.name);
+          if (found) { searchInput.value = found.name; renderMedication(found, true); dropdown.classList.add('hidden'); }
+        });
+      });
+
+      document.getElementById('trigger-api-fallback').addEventListener('click', () => {
+        dropdown.classList.add('hidden');
+        fetchExternalDrugAPI(val);
+      });
+    });
+
+    submitBtn.addEventListener('click', () => {
+      const q = searchInput.value.trim();
+      if (!q) return;
+      const matches = searchLocalDB(q);
+      if (matches.length > 0) renderMedication(matches[0], true);
+      else fetchExternalDrugAPI(q);
+      dropdown.classList.add('hidden');
+    });
+
+    clearBtn.addEventListener('click', () => { searchInput.value = ''; clearBtn.classList.add('hidden'); dropdown.classList.add('hidden'); });
+
+    document.querySelectorAll('.quick-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const found = BASE_COMPLETE_MEDS.find(m => m.name === pill.dataset.drug);
+        if (found) { searchInput.value = found.name; clearBtn.classList.remove('hidden'); renderMedication(found, true); }
+      });
+    });
+
+    // =========================================================================
+    // 5. CAPSULES PÉDAGOGIQUES, LENIS & GSAP SCROLLTRIGGER PARALLAXE
+    // =========================================================================
+    const VIDEO_CHAPTERS = [
+      {
+        duration: "01:30 · Automédication",
+        steps: [
+          { title: "1. Vérifier le nom de la molécule", desc: "Regardez toujours sous le nom de marque : Doliprane, Dafalgan et Fervex contiennent tous du paracétamol. Ne les cumulez jamais." },
+          { title: "2. Espacer les prises d'au moins 4 heures", desc: "Laissez le temps au foie d'éliminer la dose précédente. L'intervalle idéal est de 6 heures entre deux comprimés." },
+          { title: "3. Adapter au poids chez l'enfant", desc: "Utilisez toujours la pipette graduée fournie dans la boîte d'origine, jamais une cuillère de cuisine." }
+        ]
+      },
+      {
+        duration: "02:15 · Gestes Lovenox",
+        steps: [
+          { title: "1. Choisir la zone d'injection", desc: "Piquez dans le pli du ventre (à au moins 5 cm du nombril), en alternant le côté gauche et le côté droit chaque jour." },
+          { title: "2. Ne pas purger la bulle d'air", desc: "La petite bulle d'air présente dans la seringue préremplie est normale : elle permet d'injecter la totalité de la dose." },
+          { title: "3. Piquer perpendiculairement sans frotter", desc: "Pincez doucement la peau, introduisez l'aiguille à 90°, injectez lentement puis relâchez sans masser." }
+        ]
+      },
+      {
+        duration: "01:45 · Suivi Coumadine",
+        steps: [
+          { title: "1. Prendre son comprimé à heure fixe", desc: "Idéalement le soir, afin de pouvoir ajuster la dose dès le lendemain matin après les résultats de votre prise de sang (INR)." },
+          { title: "2. Garder une alimentation régulière", desc: "Les légumes verts (choux, brocolis, épinards) ne sont pas interdits : consommez-les en quantité régulière d'une semaine à l'autre." },
+          { title: "3. Bannir l'automédication", desc: "L'aspirine, l'ibuprofène et le millepertuis sont à proscrire. Demandez systématiquement conseil à votre pharmacien." }
+        ]
+      }
+    ];
+
+    let activeChapterIdx = 0, activeStepIdx = 0, videoTimer = null;
+
+    function renderVideoStage() {
+      const chapter = VIDEO_CHAPTERS[activeChapterIdx];
+      const step = chapter.steps[activeStepIdx];
+      document.getElementById('video-step-badge').textContent = `Étape ${activeStepIdx + 1} sur ${chapter.steps.length}`;
+      document.getElementById('video-stage-title').textContent = step.title;
+      document.getElementById('video-stage-desc').textContent = step.desc;
+      document.getElementById('video-duration-label').textContent = chapter.duration;
+      document.getElementById('video-progress-fill').style.width = `${((activeStepIdx + 1) / chapter.steps.length) * 100}%`;
+    }
+
+    document.querySelectorAll('.video-chapter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeChapterIdx = parseInt(btn.dataset.chapter, 10);
+        activeStepIdx = 0;
+        document.querySelectorAll('.video-chapter-btn').forEach(b => {
+          b.className = "video-chapter-btn text-left p-4 rounded-2xl border border-aurelia-border dark:border-aurelia-darkBorder bg-white/80 dark:bg-aurelia-darkCard hover:border-aurelia-eucalyptus transition-all cursor-pointer";
+        });
+        btn.className = "video-chapter-btn active text-left p-4 rounded-2xl border-2 border-aurelia-eucalyptus bg-aurelia-cream/60 dark:bg-aurelia-darkBg transition-all cursor-pointer";
+        renderVideoStage();
+      });
+    });
+
+    document.getElementById('video-next-step-btn').addEventListener('click', () => {
+      activeStepIdx = (activeStepIdx + 1) % VIDEO_CHAPTERS[activeChapterIdx].steps.length;
+      renderVideoStage();
+    });
+
+    document.getElementById('video-play-btn').addEventListener('click', () => {
+      const label = document.getElementById('video-play-label');
+      if (videoTimer) { clearInterval(videoTimer); videoTimer = null; label.textContent = "Lecture auto"; }
+      else {
+        label.textContent = "Pause";
+        videoTimer = setInterval(() => {
+          activeStepIdx = (activeStepIdx + 1) % VIDEO_CHAPTERS[activeChapterIdx].steps.length;
+          renderVideoStage();
+        }, 3800);
+      }
+    });
+
+    if (typeof Lenis !== 'undefined') {
+      lenisInstance = new Lenis({ duration: 1.15, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true });
+      function raf(time) { lenisInstance.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+      if (typeof ScrollTrigger !== 'undefined') lenisInstance.on('scroll', ScrollTrigger.update);
+    }
+
+    const progressBar = document.getElementById('scroll-progress');
+    window.addEventListener('scroll', () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressBar) progressBar.style.width = `${Math.min(100, Math.max(0, (docHeight > 0 ? window.scrollY / docHeight : 0) * 100))}%`;
+    }, { passive: true });
+
+    document.querySelectorAll('.smooth-anchor').forEach(anchor => {
+      anchor.addEventListener('click', (e) => {
+        const targetEl = document.querySelector(anchor.getAttribute('href'));
+        if (targetEl) {
+          e.preventDefault();
+          if (lenisInstance) lenisInstance.scrollTo(targetEl, { offset: -80 });
+          else targetEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    document.getElementById('dark-mode-toggle').addEventListener('click', () => document.documentElement.classList.toggle('dark'));
+    document.getElementById('print-report-btn').addEventListener('click', () => window.print());
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderMedication(BASE_COMPLETE_MEDS[0], false);
+      saveAndAnalyzeRx();
+      renderVideoStage();
+
+      if (typeof gsap !== 'undefined') {
+        gsap.from('.hero-animate', { y: 18, opacity: 0, duration: 0.85, stagger: 0.1, ease: 'power3.out' });
+
+        if (typeof ScrollTrigger !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+
+          // Parallaxe dynamique des halos d'arrière-plan au défilement
+          gsap.to('#bg-orb-1', {
+            xPercent: 18, yPercent: 28, scale: 1.15, ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
+          });
+          gsap.to('#bg-orb-2', {
+            xPercent: -20, yPercent: -25, scale: 1.12, ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
+          });
+          gsap.to('#bg-orb-3', {
+            xPercent: 14, yPercent: -18, scale: 0.88, ease: 'none',
+            scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: 1.5 }
+          });
+
+          gsap.utils.toArray('.scroll-reveal').forEach(section => {
+            gsap.from(section, {
+              y: 28, opacity: 0, duration: 0.8, ease: 'power3.out',
+              scrollTrigger: { trigger: section, start: 'top 86%', once: true }
+            });
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

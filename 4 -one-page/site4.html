@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLAYPULSE 2026 — Radar & Wishlist Jeux Vidéo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Outfit:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        display: ['Chakra Petch', 'sans-serif'],
+                        pixel: ['Silkscreen', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #060811;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+
+        /* Canvas WebGL en arrière-plan */
+        #webgl-bg {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Grille d'ambiance subtile */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Panneaux verre fumé */
+        .glass-panel {
+            background: rgba(14, 18, 32, 0.72);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.75);
+        }
+
+        /* Dynamic Island */
+        .dynamic-island {
+            background: rgba(10, 13, 24, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+        }
+        .dynamic-island:hover {
+            transform: scale(1.02);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Scène du carrousel vertical */
+        .v-carousel-wrapper {
+            position: relative;
+            width: 100%;
+            height: 540px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .v-card {
+            position: absolute;
+            width: 100%;
+            max-width: 540px;
+            border-radius: 26px;
+            background: rgba(16, 21, 38, 0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.85);
+            overflow: hidden;
+            will-change: transform, opacity;
+        }
+
+        .v-card.is-active {
+            border-color: var(--accent-color, #38BDF8);
+        }
+
+        /* Bouton tactile dynamique */
+        .btn-tactile {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .btn-tactile:hover {
+            transform: translateY(-2px);
+        }
+        .btn-tactile:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- ARRIÈRE-PLAN WEBGL THREE.JS & GRILLE -->
+    <canvas id="webgl-bg"></canvas>
+    <div class="bg-grid"></div>
+
+    <!-- DYNAMIC ISLAND NAVIGATION -->
+    <header class="fixed top-5 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+        <div id="dynamic-island" class="dynamic-island pointer-events-auto rounded-full px-3 py-2 flex items-center gap-3 sm:gap-5 max-w-full">
+            <!-- Marque -->
+            <a href="#top" class="flex items-center gap-2.5 pl-1 pr-2">
+                <span id="brand-dot" class="w-3 h-3 rounded-full bg-sky-400 transition-colors duration-300"></span>
+                <span class="font-display font-bold italic text-base sm:text-lg tracking-wider text-white">
+                    PLAY<span class="text-sky-400">PULSE</span>
+                </span>
+            </a>
+
+            <!-- Liens -->
+            <nav class="hidden md:flex items-center gap-5 text-xs font-bold uppercase tracking-wider text-slate-300">
+                <a href="#carrousel-section" class="hover:text-white transition-colors">Sorties 2026</a>
+                <a href="#wishlist-section" class="hover:text-white transition-colors">Ma Wishlist</a>
+                <a href="#studio-section" class="hover:text-white transition-colors">+ Ajouter</a>
+            </nav>
+
+            <!-- Notification dynamique -->
+            <div id="island-toast" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold text-slate-200">
+                <span id="island-status-text">Radar 2026 actif</span>
+            </div>
+
+            <!-- Compteur Wishlist -->
+            <a href="#wishlist-section" class="btn-tactile px-3.5 py-1.5 rounded-full bg-white text-slate-950 font-display font-bold text-xs flex items-center gap-2">
+                <span>WISHLIST</span>
+                <span id="nav-wish-count" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-pixel text-[10px]">2</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main id="top" class="relative z-10 pt-28 pb-20 px-4 sm:px-8 max-w-7xl mx-auto">
+
+        <!-- SECTION HÉRO + CARROUSEL VERTICAL -->
+        <section id="carrousel-section" class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center min-h-[620px]">
+            
+            <!-- COLONNE GAUCHE : PRÉSENTATION & FILTRES -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-pixel text-sky-300">
+                    <span>● CALENDRIER OFFICIEL 2026</span>
+                </div>
+
+                <h1 class="font-display font-bold italic text-4xl sm:text-5xl xl:text-6xl uppercase leading-[1.05] tracking-tight text-white">
+                    Les prochaines sorties qui font vibrer
+                </h1>
+
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                    Explore les blockbusters et pépites attendus sur consoles et PC. Navigue dans le carrousel vertical, découvre chaque univers et prépare ta Wishlist.
+                </p>
+
+                <!-- Filtres Plateformes -->
+                <div class="space-y-3 pt-1">
+                    <div class="flex flex-wrap gap-2" id="platform-filters">
+                        <button onclick="setPlatform('all', this)" class="plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-sky-500 text-slate-950">
+                            Toutes
+                        </button>
+                        <button onclick="setPlatform('PS5', this)" class="plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/15">
+                            PS5
+                        </button>
+                        <button onclick="setPlatform('PC', this)" class="plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/15">
+                            PC
+                        </button>
+                        <button onclick="setPlatform('Switch 2', this)" class="plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/15">
+                            Switch 2
+                        </button>
+                        <button onclick="setPlatform('Xbox Series', this)" class="plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/15">
+                            Xbox
+                        </button>
+                    </div>
+
+                    <!-- Barre de recherche -->
+                    <div class="relative max-w-md">
+                        <input type="text" id="search-input" placeholder="Rechercher un jeu, un studio, un genre..." 
+                               class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400 transition-colors">
+                    </div>
+                </div>
+
+                <!-- Indicateur de jeu actif -->
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between max-w-md">
+                    <div>
+                        <span class="text-[11px] font-pixel text-slate-400 block">SÉLECTION ACTIVE</span>
+                        <span id="active-title-hud" class="font-display font-bold text-lg text-white">Grand Theft Auto VI</span>
+                    </div>
+                    <div class="text-right">
+                        <span id="carousel-counter" class="font-pixel text-sm text-sky-400">01 / 06</span>
+                        <span class="block text-[11px] text-slate-400">Molette / Flèches ↑↓</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE DROITE : CARROUSEL VERTICAL + CONTRÔLES -->
+            <div class="lg:col-span-7 flex items-center gap-3 sm:gap-5">
+                
+                <!-- Scène du Carrousel Vertical -->
+                <div id="v-carousel-stage" class="v-carousel-wrapper cursor-grab active:cursor-grabbing">
+                    <!-- Cartes injectées par JavaScript -->
+                </div>
+
+                <!-- Barre de contrôle verticale à droite -->
+                <div class="flex flex-col items-center gap-3 z-20">
+                    <button onclick="stepCarousel(-1)" aria-label="Jeu précédent"
+                            class="btn-tactile w-11 h-11 rounded-2xl glass-panel hover:bg-white/20 flex items-center justify-center text-white font-bold text-base">
+                        ▲
+                    </button>
+
+                    <!-- Puces de progression -->
+                    <div id="v-dots" class="flex flex-col items-center gap-2 py-2"></div>
+
+                    <button onclick="stepCarousel(1)" aria-label="Jeu suivant"
+                            class="btn-tactile w-11 h-11 rounded-2xl glass-panel hover:bg-white/20 flex items-center justify-center text-white font-bold text-base">
+                        ▼
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2 : MA WISHLIST GAMING -->
+        <section id="wishlist-section" class="mt-24">
+            <div class="glass-panel rounded-[2rem] p-6 sm:p-10">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6 mb-8">
+                    <div>
+                        <span class="font-pixel text-xs text-rose-400">● SÉLECTION PERSONNELLLE</span>
+                        <h2 class="font-display font-bold italic text-2xl sm:text-4xl uppercase text-white mt-1">
+                            Ma Wishlist (<span id="section-wish-count">2</span>)
+                        </h2>
+                    </div>
+                    <a href="#studio-section" class="btn-tactile px-5 py-2.5 rounded-xl bg-white text-slate-950 font-display font-bold text-xs uppercase tracking-wider w-fit">
+                        + Ajouter un jeu
+                    </a>
+                </div>
+
+                <div id="wishlist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cartes Wishlist générées par JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3 : AJOUTER UNE SORTIE AU RADAR -->
+        <section id="studio-section" class="mt-20 max-w-4xl mx-auto">
+            <div class="glass-panel rounded-[2rem] p-6 sm:p-10">
+                <div class="mb-6">
+                    <span class="font-pixel text-xs text-sky-400">● CONTRIBUTION</span>
+                    <h2 class="font-display font-bold italic text-2xl sm:text-3xl uppercase text-white mt-1">
+                        Ajouter un jeu au calendrier
+                    </h2>
+                    <p class="text-sm text-slate-300 mt-1">
+                        Enregistre une prochaine sortie : elle rejoint immédiatement le carrousel vertical et ta Wishlist.
+                    </p>
+                </div>
+
+                <form id="add-game-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Titre du jeu</label>
+                        <input type="text" id="g-title" required placeholder="Ex: The Witcher IV"
+                               class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Plateforme principale</label>
+                        <select id="g-platform" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-400">
+                            <option value="PS5">PS5</option>
+                            <option value="PC">PC</option>
+                            <option value="Switch 2">Switch 2</option>
+                            <option value="Xbox Series">Xbox Series</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Date de sortie</label>
+                        <input type="text" id="g-date" required placeholder="Ex: 18 Novembre 2026"
+                               class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Genre & Studio</label>
+                        <input type="text" id="g-genre" required placeholder="Ex: Action-RPG • CD Projekt Red"
+                               class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Couleur d'ambiance</label>
+                        <select id="g-color" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-400">
+                            <option value="#38BDF8">Bleu Électrique</option>
+                            <option value="#FB7185">Rouge / Rose Néon</option>
+                            <option value="#34D399">Vert Émeraude</option>
+                            <option value="#FBBF24">Or / Ambre</option>
+                            <option value="#A78BFA">Violet Plasma</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Thème visuel</label>
+                        <select id="g-theme" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-400">
+                            <option value="cyber">Néon Urbain / Action</option>
+                            <option value="samurai">Épique / Aventure</option>
+                            <option value="scifi">Science-Fiction / Espace</option>
+                            <option value="fantasy">Dark Fantasy / RPG</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Présentation du jeu</label>
+                        <textarea id="g-desc" rows="3" required placeholder="Décris l'univers, le gameplay et ce qui rend ce jeu incontournable..."
+                                  class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"></textarea>
+                    </div>
+
+                    <button type="submit" class="sm:col-span-2 btn-tactile py-4 rounded-xl bg-gradient-to-r from-sky-500 to-rose-500 text-white font-display font-bold uppercase tracking-wider text-sm">
+                        + Publier dans le carrousel & ma Wishlist
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODALE D'INSPECTION D'UN JEU -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-md p-4">
+        <div class="glass-panel rounded-3xl max-w-xl w-full overflow-hidden border border-white/20">
+            <div id="m-cover" class="h-52 relative overflow-hidden">
+                <!-- Visuel SVG injecté -->
+            </div>
+            <div class="p-6 sm:p-8 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span id="m-plat" class="px-3 py-1 rounded-full bg-white/15 text-xs font-pixel text-sky-300"></span>
+                    <span id="m-date" class="text-xs font-bold text-slate-300"></span>
+                </div>
+                <div>
+                    <span id="m-genre" class="text-xs font-bold uppercase tracking-wider text-rose-400"></span>
+                    <h3 id="m-title" class="font-display font-bold italic text-2xl sm:text-3xl uppercase text-white mt-1"></h3>
+                </div>
+                <p id="m-desc" class="text-sm sm:text-base text-slate-300 leading-relaxed"></p>
+                <div class="flex gap-3 pt-3">
+                    <button id="m-wish-btn" class="btn-tactile flex-1 py-3.5 rounded-xl font-display font-bold text-xs uppercase tracking-wider"></button>
+                    <button onclick="closeModal()" class="btn-tactile px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs uppercase">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="relative z-10 py-8 text-center text-xs text-slate-400 border-t border-white/10">
+        <p>© 2026 PLAYPULSE — Radar & Wishlist Jeux Vidéo</p>
+    </footer>
+
+    <script>
+        // 1. GÉNÉRATEUR DE JAQUETTES ILLUSTRÉES HD (SVG)
+        function createCoverArtwork(theme, color, title) {
+            const safeTitle = title.replace(/</g, "<");
+            if (theme === 'cyber') {
+                return `
+                <svg viewBox="0 0 600 280" class="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="g-cyber" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#0f172a"/>
+                            <stop offset="55%" stop-color="${color}"/>
+                            <stop offset="100%" stop-color="#f43f5e"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="280" fill="url(#g-cyber)"/>
+                    <circle cx="470" cy="95" r="68" fill="#fde047" opacity="0.85"/>
+                    <path d="M0 280 L0 175 L65 175 L65 130 L135 130 L135 190 L210 190 L210 105 L290 105 L290 165 L375 165 L375 120 L465 120 L465 185 L600 185 L600 280 Z" fill="#090d16" opacity="0.9"/>
+                    <path d="M0 225 L600 225" stroke="${color}" stroke-width="3" opacity="0.8"/>
+                    <text x="28" y="255" fill="rgba(255,255,255,0.22)" font-family="sans-serif" font-weight="900" font-size="34">${safeTitle.toUpperCase()}</text>
+                </svg>`;
+            }
+            if (theme === 'samurai') {
+                return `
+                <svg viewBox="0 0 600 280" class="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="g-sam" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#1e1b4b"/>
+                            <stop offset="60%" stop-color="${color}"/>
+                            <stop offset="100%" stop-color="#f59e0b"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="280" fill="url(#g-sam)"/>
+                    <circle cx="300" cy="125" r="78" fill="#fffbeb" opacity="0.9"/>
+                    <polygon points="90,280 285,95 480,280" fill="#0f172a"/>
+                    <polygon points="285,95 245,145 275,140 285,155 305,138 325,145" fill="#f8fafc"/>
+                    <path d="M0 280 Q240 215 600 265 L600 280 Z" fill="#05070e"/>
+                </svg>`;
+            }
+            if (theme === 'scifi') {
+                return `
+                <svg viewBox="0 0 600 280" class="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="g-sci" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#020617"/>
+                            <stop offset="50%" stop-color="#1d4ed8"/>
+                            <stop offset="100%" stop-color="${color}"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="280" fill="url(#g-sci)"/>
+                    <circle cx="430" cy="135" r="95" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+                    <circle cx="430" cy="135" r="62" fill="${color}" opacity="0.75"/>
+                    <ellipse cx="430" cy="135" rx="145" ry="28" transform="rotate(-18 430 135)" fill="none" stroke="#e0f2fe" stroke-width="4" opacity="0.8"/>
+                    <polygon points="75,210 185,155 150,215" fill="#f8fafc" opacity="0.9"/>
+                </svg>`;
+            }
+            return `
+            <svg viewBox="0 0 600 280" class="w-full h-full object-cover" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="g-fan" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#090d16"/>
+                        <stop offset="55%" stop-color="${color}"/>
+                        <stop offset="100%" stop-color="#312e81"/>
+                    </linearGradient>
+                </defs>
+                <rect width="600" height="280" fill="url(#g-fan)"/>
+                <polygon points="300,35 375,140 300,245 225,140" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.65"/>
+                <circle cx="300" cy="140" r="42" fill="${color}" opacity="0.85"/>
+                <path d="M0 280 L140 185 L270 250 L430 170 L600 280 Z" fill="#05070e" opacity="0.88"/>
+            </svg>`;
+        }
+
+        // 2. CATALOGUE DES JEUX 2026
+        const defaultGames = [
+            {
+                id: 1,
+                title: "Grand Theft Auto VI",
+                platform: "PS5",
+                date: "19 Novembre 2026",
+                genre: "Action • Monde Ouvert • Rockstar Games",
+                color: "#FB7185",
+                theme: "cyber",
+                desc: "Plonge dans l'État de Leonida et les rues vibrantes de Vice City aux côtés de Lucia et Jason dans le monde ouvert le plus ambitieux jamais conçu."
+            },
+            {
+                id: 2,
+                title: "Ghost of Yōtei",
+                platform: "PS5",
+                date: "15 Octobre 2026",
+                genre: "Action-Aventure • Sucker Punch",
+                color: "#FBBF24",
+                theme: "samurai",
+                desc: "En 1603, incarne Atsu au pied du mont Yōtei dans les terres sauvages d'Ezo. Maîtrise le katana double, l'arc et la poudre noire."
+            },
+            {
+                id: 3,
+                title: "Metroid Prime 4: Beyond",
+                platform: "Switch 2",
+                date: "04 Décembre 2026",
+                genre: "Sci-Fi • Exploration • Nintendo",
+                color: "#38BDF8",
+                theme: "scifi",
+                desc: "Samus Aran explore une planète mystérieuse dotée de nouvelles capacités psychiques et affrontements nerveux en vue subjective."
+            },
+            {
+                id: 4,
+                title: "Fable",
+                platform: "Xbox Series",
+                date: "22 Octobre 2026",
+                genre: "Action-RPG • Playground Games",
+                color: "#34D399",
+                theme: "fantasy",
+                desc: "Retourne dans le royaume féerique d'Albion où chaque choix moral façonne ta légende, ton apparence et l'avenir du monde."
+            },
+            {
+                id: 5,
+                title: "The Witcher IV",
+                platform: "PC",
+                date: "Q4 2026",
+                genre: "RPG • Dark Fantasy • CD Projekt Red",
+                color: "#A78BFA",
+                theme: "fantasy",
+                desc: "Incarne Ciri sur la Voie du Sorceleur à travers des contrées nordiques inédites peuplées de créatures mythologiques."
+            },
+            {
+                id: 6,
+                title: "Death Stranding 2: On The Beach",
+                platform: "PS5",
+                date: "26 Juin 2026",
+                genre: "Sci-Fi • Narration • Kojima Productions",
+                color: "#38BDF8",
+                theme: "scifi",
+                desc: "Sam Bridges repart au-delà des UCA pour connecter l'humanité face à de nouvelles menaces surnaturelles."
+            }
+        ];
+
+        let games = JSON.parse(localStorage.getItem('playpulse_v3_games')) || defaultGames;
+        let wishlist = JSON.parse(localStorage.getItem('playpulse_v3_wish')) || [1, 3];
+        let activeIndex = 0;
+        let currentPlatform = 'all';
+
+        // 3. SCÈNE WEBGL THREE.JS INTERACTIVE
+        let targetSceneColor = new THREE.Color(defaultGames[0].color);
+        function initThreeBackground() {
+            const canvas = document.getElementById('webgl-bg');
+            if (!window.THREE || !canvas) return;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 14;
+
+            // Noyau géométrique filaire
+            const coreGeo = new THREE.IcosahedronGeometry(4.2, 1);
+            const coreMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.16
+            });
+            const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+            coreMesh.position.set(4.5, 0.5, -2);
+            scene.add(coreMesh);
+
+            // Anneau orbital
+            const ringGeo = new THREE.TorusGeometry(6.2, 0.04, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0xfb7185,
+                transparent: true,
+                opacity: 0.25
+            });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.position.set(4.5, 0.5, -2);
+            ringMesh.rotation.x = 1.1;
+            scene.add(ringMesh);
+
+            // Particules flottantes
+            const count = 450;
+            const positions = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 34;
+                positions[i + 1] = (Math.random() - 0.5) * 24;
+                positions[i + 2] = (Math.random() - 0.5) * 18;
+            }
+            const particlesGeo = new THREE.BufferGeometry();
+            particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const particlesMat = new THREE.PointsMaterial({
+                color: 0x38bdf8,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.55
+            });
+            const particles = new THREE.Points(particlesGeo, particlesMat);
+            scene.add(particles);
+
+            let mouseX = 0, mouseY = 0;
+            window.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                coreMesh.rotation.y += 0.003;
+                coreMesh.rotation.x += 0.0015;
+                ringMesh.rotation.z -= 0.004;
+                particles.rotation.y += 0.0008;
+
+                // Interpolation fluide vers la couleur du jeu actif
+                coreMat.color.lerp(targetSceneColor, 0.05);
+                particlesMat.color.lerp(targetSceneColor, 0.05);
+
+                camera.position.x += (mouseX * 1.2 - camera.position.x) * 0.04;
+                camera.position.y += (-mouseY * 1.0 - camera.position.y) * 0.04;
+                camera.lookAt(0, 0, 0);
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // 4. FILTRAGE & CARROUSEL VERTICAL
+        function getFilteredGames() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            return games.filter(g => {
+                const matchText = g.title.toLowerCase().includes(query) || g.genre.toLowerCase().includes(query);
+                const matchPlat = currentPlatform === 'all' || g.platform.toLowerCase().includes(currentPlatform.toLowerCase());
+                return matchText && matchPlat;
+            });
+        }
+
+        function renderCarousel() {
+            const list = getFilteredGames();
+            const stage = document.getElementById('v-carousel-stage');
+            const dots = document.getElementById('v-dots');
+
+            if (list.length === 0) {
+                stage.innerHTML = `
+                    <div class="glass-panel rounded-3xl p-8 text-center max-w-md">
+                        <p class="font-display font-bold text-lg text-white mb-1">Aucun jeu trouvé</p>
+                        <p class="text-xs text-slate-400">Essaie une autre plateforme ou réinitialise ta recherche.</p>
+                    </div>`;
+                dots.innerHTML = '';
+                document.getElementById('carousel-counter').textContent = '00 / 00';
+                return;
+            }
+
+            if (activeIndex >= list.length) activeIndex = 0;
+
+            stage.innerHTML = list.map((g, i) => {
+                const inWish = wishlist.includes(g.id);
+                return `
+                <article data-v-idx="${i}" onclick="onCardSelect(${i}, ${g.id})"
+                         style="--accent-color: ${g.color}"
+                         class="v-card cursor-pointer">
+                    
+                    <!-- Bannière illustrée -->
+                    <div class="h-44 sm:h-48 relative overflow-hidden">
+                        ${createCoverArtwork(g.theme, g.color, g.title)}
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#101526] via-transparent to-black/30"></div>
+                        
+                        <div class="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 font-pixel text-[11px] text-white">
+                                ${g.platform}
+                            </span>
+                            <span class="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/15 text-xs font-bold text-white">
+                                📅 ${g.date}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Contenu descriptif -->
+                    <div class="p-5 sm:p-6">
+                        <span class="text-xs font-bold uppercase tracking-wider" style="color: ${g.color}">
+                            ${g.genre}
+                        </span>
+                        <h3 class="font-display font-bold italic text-2xl text-white uppercase mt-0.5 mb-2">
+                            ${g.title}
+                        </h3>
+                        <p class="text-xs sm:text-sm text-slate-300 line-clamp-2 leading-relaxed mb-4">
+                            ${g.desc}
+                        </p>
+
+                        <div class="flex items-center gap-3">
+                            <button onclick="event.stopPropagation(); toggleWishlist(${g.id})"
+                                    data-wish-btn="${g.id}"
+                                    class="btn-tactile flex-1 py-2.5 px-4 rounded-xl font-display font-bold text-xs uppercase tracking-wider ${inWish ? 'bg-rose-500 text-white' : 'bg-white text-slate-950'}">
+                                ${inWish ? '♥ Dans ma Wishlist' : '+ Ajouter à ma Wishlist'}
+                            </button>
+                            <button onclick="event.stopPropagation(); openModal(${g.id})"
+                                    class="btn-tactile px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-display font-bold text-xs uppercase">
+                                Fiche
+                            </button>
+                        </div>
+                    </div>
+                </article>`;
+            }).join('');
+
+            dots.innerHTML = list.map((_, i) => `
+                <button onclick="goToIndex(${i})" aria-label="Aller au jeu ${i + 1}"
+                        class="w-2 rounded-full transition-all duration-300 ${i === activeIndex ? 'h-7 bg-sky-400' : 'h-2 bg-white/25 hover:bg-white/50'}"></button>
+            `).join('');
+
+            positionCards(true);
+        }
+
+        function positionCards(immediate = false) {
+            const list = getFilteredGames();
+            const cards = document.querySelectorAll('.v-card');
+            const total = list.length;
+            if (total === 0) return;
+
+            const activeGame = list[activeIndex];
+            document.getElementById('active-title-hud').textContent = activeGame.title;
+            document.getElementById('carousel-counter').textContent = `${String(activeIndex + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+            document.getElementById('brand-dot').style.backgroundColor = activeGame.color;
+
+            if (window.THREE) {
+                targetSceneColor.set(activeGame.color);
+            }
+
+            cards.forEach((card, i) => {
+                let offset = i - activeIndex;
+                if (total > 2) {
+                    if (offset > Math.floor(total / 2)) offset -= total;
+                    if (offset < -Math.floor(total / 2)) offset += total;
+                }
+
+                const abs = Math.abs(offset);
+                const isCenter = offset === 0;
+                const yPos = offset * 175;
+                const scale = isCenter ? 1 : Math.max(0.84, 1 - abs * 0.12);
+                const opacity = abs > 1 ? 0 : (isCenter ? 1 : 0.42);
+
+                card.classList.toggle('is-active', isCenter);
+                card.style.zIndex = 20 - abs;
+                card.style.pointerEvents = abs > 1 ? 'none' : 'auto';
+
+                if (immediate || !window.gsap) {
+                    card.style.transform = `translateY(${yPos}px) scale(${scale})`;
+                    card.style.opacity = opacity;
+                } else {
+                    gsap.to(card, {
+                        y: yPos,
+                        scale: scale,
+                        opacity: opacity,
+                        duration: 0.48,
+                        ease: "power3.out"
+                    });
+                }
+            });
+
+            document.querySelectorAll('#v-dots button').forEach((dot, i) => {
+                dot.className = `w-2 rounded-full transition-all duration-300 ${i === activeIndex ? 'h-7 bg-sky-400' : 'h-2 bg-white/25 hover:bg-white/50'}`;
+            });
+        }
+
+        function stepCarousel(dir) {
+            const list = getFilteredGames();
+            if (list.length === 0) return;
+            activeIndex = (activeIndex + dir + list.length) % list.length;
+            positionCards(false);
+        }
+
+        function goToIndex(idx) {
+            activeIndex = idx;
+            positionCards(false);
+        }
+
+        function onCardSelect(idx, gameId) {
+            if (idx === activeIndex) {
+                openModal(gameId);
+            } else {
+                activeIndex = idx;
+                positionCards(false);
+            }
+        }
+
+        // 5. GESTION DE LA WISHLIST & DYNAMIC ISLAND
+        function showIslandMessage(msg) {
+            const status = document.getElementById('island-status-text');
+            status.textContent = msg;
+            if (window.gsap) {
+                gsap.fromTo('#dynamic-island', { scale: 0.97 }, { scale: 1, duration: 0.35, ease: "back.out(2)" });
+            }
+        }
+
+        function toggleWishlist(id) {
+            const game = games.find(g => g.id === id);
+            const exists = wishlist.includes(id);
+            wishlist = exists ? wishlist.filter(item => item !== id) : [...wishlist, id];
+            localStorage.setItem('playpulse_v3_wish', JSON.stringify(wishlist));
+
+            if (game) {
+                showIslandMessage(exists ? `Retiré : ${game.title}` : `Ajouté : ${game.title}`);
+            }
+
+            // Mise à jour des boutons du carrousel
+            document.querySelectorAll(`[data-wish-btn="${id}"]`).forEach(btn => {
+                const inWish = wishlist.includes(id);
+                btn.className = `btn-tactile flex-1 py-2.5 px-4 rounded-xl font-display font-bold text-xs uppercase tracking-wider ${inWish ? 'bg-rose-500 text-white' : 'bg-white text-slate-950'}`;
+                btn.textContent = inWish ? '♥ Dans ma Wishlist' : '+ Ajouter à ma Wishlist';
+            });
+
+            renderWishlist();
+        }
+
+        function renderWishlist() {
+            document.getElementById('nav-wish-count').textContent = wishlist.length;
+            document.getElementById('section-wish-count').textContent = wishlist.length;
+
+            const savedGames = games.filter(g => wishlist.includes(g.id));
+            const grid = document.getElementById('wishlist-grid');
+
+            if (savedGames.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-slate-400 text-sm">
+                        Ta Wishlist est vide. Ajoute tes jeux préférés depuis le carrousel ci-dessus !
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = savedGames.map(g => `
+                <div class="rounded-2xl bg-white/5 border border-white/10 overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 relative overflow-hidden">
+                            ${createCoverArtwork(g.theme, g.color, g.title)}
+                            <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/70 font-pixel text-[10px] text-white">${g.platform}</span>
+                        </div>
+                        <div class="p-4">
+                            <span class="text-[11px] font-bold text-slate-400">📅 ${g.date}</span>
+                            <h3 class="font-display font-bold italic text-lg text-white uppercase mt-0.5">${g.title}</h3>
+                            <p class="text-xs text-slate-300 line-clamp-2 mt-1">${g.desc}</p>
+                        </div>
+                    </div>
+                    <div class="px-4 pb-4 pt-2 flex items-center justify-between border-t border-white/10">
+                        <button onclick="openModal(${g.id})" class="text-xs font-bold text-sky-400 hover:underline">Voir la fiche</button>
+                        <button onclick="toggleWishlist(${g.id})" class="text-xs font-bold text-rose-400 hover:text-rose-300">✕ Retirer</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 6. FILTRES, RECHERCHE & FORMULAIRE D'AJOUT
+        function setPlatform(plat, btn) {
+            currentPlatform = plat;
+            activeIndex = 0;
+            document.querySelectorAll('.plat-btn').forEach(b => {
+                b.className = 'plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/15';
+            });
+            btn.className = 'plat-btn btn-tactile px-4 py-2 rounded-xl text-xs font-display font-bold uppercase tracking-wider bg-sky-500 text-slate-950';
+            renderCarousel();
+        }
+
+        document.getElementById('search-input').addEventListener('input', () => {
+            activeIndex = 0;
+            renderCarousel();
+        });
+
+        document.getElementById('add-game-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newGame = {
+                id: Date.now(),
+                title: document.getElementById('g-title').value.trim(),
+                platform: document.getElementById('g-platform').value,
+                date: document.getElementById('g-date').value.trim(),
+                genre: document.getElementById('g-genre').value.trim(),
+                color: document.getElementById('g-color').value,
+                theme: document.getElementById('g-theme').value,
+                desc: document.getElementById('g-desc').value.trim()
+            };
+
+            games.unshift(newGame);
+            wishlist.push(newGame.id);
+            localStorage.setItem('playpulse_v3_games', JSON.stringify(games));
+            localStorage.setItem('playpulse_v3_wish', JSON.stringify(wishlist));
+
+            e.target.reset();
+            currentPlatform = 'all';
+            activeIndex = 0;
+            renderCarousel();
+            renderWishlist();
+            showIslandMessage(`Nouveau jeu : ${newGame.title}`);
+            document.getElementById('carrousel-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 7. MODALE DÉTAILS
+        function openModal(id) {
+            const g = games.find(item => item.id === id);
+            if (!g) return;
+
+            document.getElementById('m-cover').innerHTML = createCoverArtwork(g.theme, g.color, g.title);
+            document.getElementById('m-plat').textContent = g.platform;
+            document.getElementById('m-date').textContent = `📅 Sortie : ${g.date}`;
+            document.getElementById('m-genre').textContent = g.genre;
+            document.getElementById('m-title').textContent = g.title;
+            document.getElementById('m-desc').textContent = g.desc;
+
+            const wishBtn = document.getElementById('m-wish-btn');
+            const syncModalBtn = () => {
+                const inWish = wishlist.includes(g.id);
+                wishBtn.className = `btn-tactile flex-1 py-3.5 rounded-xl font-display font-bold text-xs uppercase tracking-wider ${inWish ? 'bg-rose-500 text-white' : 'bg-sky-500 text-slate-950'}`;
+                wishBtn.textContent = inWish ? '♥ Dans ma Wishlist' : '+ Ajouter à ma Wishlist';
+            };
+            syncModalBtn();
+            wishBtn.onclick = () => {
+                toggleWishlist(g.id);
+                syncModalBtn();
+            };
+
+            const modal = document.getElementById('detail-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 8. CONTRÔLES MOLETTE, GLISSEMENT VERTICAL & CLAVIER
+        const stage = document.getElementById('v-carousel-stage');
+        let wheelLock = false;
+        stage.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (wheelLock) return;
+            wheelLock = true;
+            stepCarousel(e.deltaY > 0 ? 1 : -1);
+            setTimeout(() => { wheelLock = false; }, 320);
+        }, { passive: false });
+
+        let touchStartY = null;
+        stage.addEventListener('mousedown', (e) => { touchStartY = e.clientY; });
+        window.addEventListener('mouseup', (e) => {
+            if (touchStartY === null) return;
+            const dy = e.clientY - touchStartY;
+            if (Math.abs(dy) > 35) stepCarousel(dy < 0 ? 1 : -1);
+            touchStartY = null;
+        });
+
+        stage.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+        stage.addEventListener('touchend', (e) => {
+            if (touchStartY === null) return;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dy) > 35) stepCarousel(dy < 0 ? 1 : -1);
+            touchStartY = null;
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); stepCarousel(1); }
+            if (e.key === 'ArrowUp') { e.preventDefault(); stepCarousel(-1); }
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Initialisation
+        initThreeBackground();
+        renderCarousel();
+        renderWishlist();
+    </script>
+</body>
+</html>

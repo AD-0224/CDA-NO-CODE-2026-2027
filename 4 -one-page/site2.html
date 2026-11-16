@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chez Minou-Délice 🐱✨ — Salon de Thé Vintage & Chat 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Fredoka', 'sans-serif'],
+                        retro: ['Shrikhand', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 1. FOND PAPIER PEINT VICHY VINTAGE CHAUD (ROSE & CRÈME) */
+        body {
+            background-color: #FFF0F5;
+            background-image: 
+                linear-gradient(45deg, rgba(255, 182, 193, 0.28) 25%, transparent 25%, transparent 75%, rgba(255, 182, 193, 0.28) 75%, rgba(255, 182, 193, 0.28)),
+                linear-gradient(45deg, rgba(255, 182, 193, 0.28) 25%, transparent 25%, transparent 75%, rgba(255, 182, 193, 0.28) 75%, rgba(255, 182, 193, 0.28));
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        /* 2. ANIMATIONS KITSCH DES CHATS */
+        @keyframes wiggleTail {
+            0%, 100% { transform: rotate(-12deg); }
+            50% { transform: rotate(18deg); }
+        }
+        @keyframes manekiWave {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(25deg); }
+        }
+        @keyframes floatKitsch {
+            0%, 100% { transform: translateY(0px) rotate(-4deg); }
+            50% { transform: translateY(-15px) rotate(4deg); }
+        }
+        @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.3) rotate(20deg); opacity: 0.7; }
+        }
+
+        .tail-wag { transform-origin: bottom center; animation: wiggleTail 1.4s ease-in-out infinite; }
+        .paw-wave { transform-origin: bottom left; animation: manekiWave 1s ease-in-out infinite; }
+        .float-kitsch { animation: floatKitsch 4s ease-in-out infinite; }
+        .sparkle-anim { animation: sparkle 2s ease-in-out infinite; }
+
+        .scallop-box {
+            box-shadow: 0 8px 0 #D9468F, 0 14px 25px rgba(217, 70, 143, 0.25);
+        }
+
+        /* 3. EMPREINTES QUI SUIVENT LA SOURIS */
+        @keyframes fadePaw {
+            0% { transform: scale(1) rotate(var(--rot)); opacity: 0.85; }
+            100% { transform: scale(0.4) translateY(-25px) rotate(var(--rot)); opacity: 0; }
+        }
+        .cursor-paw {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            font-size: 20px;
+            animation: fadePaw 0.9s ease-out forwards;
+        }
+
+        /* 4. PLUIE DE CHATONS */
+        @keyframes catRain {
+            0% { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(105vh) rotate(360deg); opacity: 0.8; }
+        }
+        .falling-cat {
+            position: fixed;
+            top: -50px;
+            z-index: 9998;
+            font-size: 36px;
+            pointer-events: none;
+            animation: catRain linear forwards;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 15s linear infinite;
+        }
+    </style>
+</head>
+<body class="text-[#4A1D2F] font-sans overflow-x-hidden selection:bg-[#FF69B4] selection:text-white">
+
+    <!-- CHATS DÉCORATIFS QUI FONT COUCOU -->
+    <div class="fixed bottom-0 left-4 z-30 pointer-events-none select-none hidden sm:block">
+        <div class="bg-[#FFE4E1] border-4 border-[#D9468F] rounded-t-full px-4 pt-3 pb-1 shadow-lg text-center">
+            <div class="text-5xl float-kitsch">🐱</div>
+            <span class="text-[10px] font-bold uppercase text-[#D9468F]">Miaou !</span>
+        </div>
+    </div>
+
+    <div class="fixed bottom-4 right-4 z-30">
+        <button onclick="pluieDeChats()" class="group bg-[#FFD166] hover:bg-[#FF69B4] hover:text-white border-4 border-[#4A1D2F] rounded-full px-5 py-3 font-retro text-sm shadow-[4px_4px_0px_#4A1D2F] hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+            <span class="text-2xl paw-wave inline-block">🐾</span>
+            <span>Invasion de Chats !</span>
+        </button>
+    </div>
+
+    <!-- NAVBAR VINTAGE KITSCH -->
+    <header class="sticky top-0 z-40 bg-[#FFF8DC]/95 backdrop-blur-md border-b-4 border-[#D9468F]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <a href="#" class="font-retro text-2xl sm:text-3xl text-[#D9468F] flex items-center gap-2 drop-shadow-[2px_2px_0px_#FFD166]">
+                <span class="text-3xl">😻</span>
+                <span>Chez Minou-Délice</span>
+            </a>
+
+            <nav class="hidden md:flex space-x-6 font-bold text-sm uppercase tracking-wider text-[#4A1D2F]">
+                <a href="#carte" class="hover:text-[#D9468F] transition-colors">🍰 La Carte</a>
+                <a href="#chats" class="hover:text-[#D9468F] transition-colors">🐈 Nos Stars</a>
+                <a href="#reserver" class="hover:text-[#D9468F] transition-colors">🎀 Réserver</a>
+            </nav>
+
+            <a href="#carte" class="px-4 py-2 rounded-full bg-[#FF69B4] text-white border-2 border-[#4A1D2F] font-bold text-xs shadow-[3px_3px_0px_#4A1D2F] hover:scale-105 transition-transform">
+                ☕ Plateau : <span id="nav-total" class="text-[#FFF8DC]">0,00 €</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO SECTION VINTAGE & KITSCH + CHAT 3D MARRON RÉALISTE -->
+    <section class="pt-12 pb-20 px-4 sm:px-6 max-w-6xl mx-auto">
+        <div class="bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-[3rem] p-6 sm:p-12 scallop-box relative overflow-hidden">
+            
+            <span class="sparkle-anim absolute top-6 right-8 text-3xl select-none">💖</span>
+            <span class="sparkle-anim absolute bottom-8 left-8 text-3xl select-none" style="animation-delay: 1s;">🌸</span>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                <!-- Colonne Gauche -->
+                <div class="space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFD166] border-2 border-[#4A1D2F] text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#4A1D2F]">
+                        <span>🎀 Salon de Thé Rétro • Aïda Dahdouh</span>
+                    </div>
+
+                    <h1 class="font-retro text-4xl sm:text-6xl text-[#D9468F] leading-tight drop-shadow-[3px_3px_0px_#FFD166]">
+                        Des Pâtisseries, des Ronrons & du Kitsch !
+                    </h1>
+
+                    <p class="text-lg font-medium text-[#6D2E46] leading-relaxed">
+                        Bienvenue dans le café le plus mignon et chaleureux de la ville ! Faites tourner notre <strong class="text-[#D9468F]">chaton chocolat en 3D</strong> dans la télé rétro à droite, ou cliquez dessus pour le voir bondir !
+                    </p>
+
+                    <div class="flex justify-center lg:justify-start items-center gap-4 py-2">
+                        <div class="bg-white border-2 border-[#4A1D2F] rounded-2xl px-4 py-2 flex items-center gap-3 shadow-[3px_3px_0px_#4A1D2F]">
+                            <svg class="w-12 h-12" viewBox="0 0 100 100">
+                                <path class="tail-wag" d="M75 75 Q95 55 85 35" stroke="#78350F" stroke-width="8" stroke-linecap="round" fill="none"/>
+                                <circle cx="50" cy="60" r="28" fill="#92400E" stroke="#4A1D2F" stroke-width="4"/>
+                                <polygon points="28,42 22,18 44,34" fill="#92400E" stroke="#4A1D2F" stroke-width="4"/>
+                                <polygon points="72,42 78,18 56,34" fill="#92400E" stroke="#4A1D2F" stroke-width="4"/>
+                                <circle cx="40" cy="55" r="4" fill="#4A1D2F"/>
+                                <circle cx="60" cy="55" r="4" fill="#4A1D2F"/>
+                                <circle cx="33" cy="62" r="4" fill="#FF69B4"/>
+                                <circle cx="67" cy="62" r="4" fill="#FF69B4"/>
+                                <path d="M45 63 Q50 68 55 63" stroke="#4A1D2F" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </svg>
+                            <div class="text-left text-xs">
+                                <p class="font-bold text-[#4A1D2F]">Bougez votre souris !</p>
+                                <p class="text-[#D9468F] font-semibold">Elle laisse des traces de pattes 🐾</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center lg:justify-start gap-4 pt-2">
+                        <a href="#carte" class="px-7 py-3.5 rounded-full bg-[#FF69B4] text-white border-2 border-[#4A1D2F] font-retro text-base shadow-[4px_4px_0px_#4A1D2F] hover:translate-y-0.5 transition-all">
+                            Voir la Carte Gourmande 🍰
+                        </a>
+                        <button onclick="pluieDeChats()" class="px-6 py-3.5 rounded-full bg-[#A7F3D0] text-[#4A1D2F] border-2 border-[#4A1D2F] font-bold text-sm shadow-[4px_4px_0px_#4A1D2F] hover:scale-105 transition-transform">
+                            Appeler les chats 🐱
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Colonne Droite : Télé Rétro avec LE CHAT 3D MARRON -->
+                <div class="relative">
+                    <div class="bg-[#FF9EBB] border-4 border-[#4A1D2F] rounded-[2.5rem] p-4 shadow-[8px_8px_0px_#4A1D2F]">
+                        <div class="flex items-center justify-between mb-2 px-2">
+                            <span class="bg-[#FFF8DC] border-2 border-[#4A1D2F] px-3 py-0.5 rounded-full text-xs font-bold">📺 Cat-3D (Glissez pour tourner !)</span>
+                            <div class="flex gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-[#FFD166] border border-[#4A1D2F]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#A7F3D0] border border-[#4A1D2F]"></span>
+                            </div>
+                        </div>
+                        <div id="cat-3d-container" class="h-[380px] w-full rounded-3xl overflow-hidden bg-gradient-to-b from-[#FFE4E1] to-[#FBCFE8] border-2 border-[#4A1D2F] relative cursor-grab active:cursor-grabbing">
+                            <button onclick="sauterChat3D()" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 rounded-full bg-[#FFF8DC] border-2 border-[#4A1D2F] text-xs font-bold shadow-[2px_2px_0px_#4A1D2F] hover:bg-[#FFD166] transition-colors">
+                                💖 Faire sauter Noisette 3D
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BANDEAU DÉFILANT KITSCH -->
+    <div class="py-3 bg-[#FFD166] border-y-4 border-[#4A1D2F] overflow-hidden">
+        <div class="animate-marquee font-retro text-xl sm:text-2xl text-[#4A1D2F]">
+            <span class="mx-6">🐱 CAPPU-MINOU</span> <span>💖</span>
+            <span class="mx-6 text-[#D9468F]">🍰 CH'TIRAMISU MAISON</span> <span>🌸</span>
+            <span class="mx-6">🫖 CHAI-CHAT LATTE</span> <span>✨</span>
+            <span class="mx-6 text-[#D9468F]">🧁 MIAOU-FFIN MYRTILLE</span> <span>🐾</span>
+            <span class="mx-6">🐱 CAPPU-MINOU</span> <span>💖</span>
+            <span class="mx-6 text-[#D9468F]">🍰 CH'TIRAMISU MAISON</span> <span>🌸</span>
+            <span class="mx-6">🫖 CHAI-CHAT LATTE</span> <span>✨</span>
+            <span class="mx-6 text-[#D9468F]">🧁 MIAOU-FFIN MYRTILLE</span> <span>🐾</span>
+        </div>
+    </div>
+
+    <!-- SECTION CARTE GOURMANDE AVEC JEUX DE MOTS -->
+    <section id="carte" class="py-20 px-4 sm:px-6 max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="px-4 py-1 rounded-full bg-[#FF69B4] text-white border-2 border-[#4A1D2F] text-xs font-bold uppercase shadow-[2px_2px_0px_#4A1D2F]">
+                100 % Fait Maison & Ronrons
+            </span>
+            <h2 class="font-retro text-4xl sm:text-5xl text-[#D9468F] mt-4 drop-shadow-[2px_2px_0px_#FFD166]">
+                La Carte des Douceurs Félines
+            </h2>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-3 mb-10">
+            <button onclick="filtrerMenu('all', this)" class="menu-filter px-5 py-2.5 rounded-full font-bold text-sm bg-[#4A1D2F] text-[#FFF8DC] border-2 border-[#4A1D2F] shadow-[3px_3px_0px_#FF69B4]">
+                Tout voir 😻
+            </button>
+            <button onclick="filtrerMenu('boisson', this)" class="menu-filter px-5 py-2.5 rounded-full font-bold text-sm bg-[#FFF8DC] text-[#4A1D2F] border-2 border-[#4A1D2F] hover:bg-[#FFD166]">
+                ☕ Boissons Chaudes
+            </button>
+            <button onclick="filtrerMenu('dessert', this)" class="menu-filter px-5 py-2.5 rounded-full font-bold text-sm bg-[#FFF8DC] text-[#4A1D2F] border-2 border-[#4A1D2F] hover:bg-[#FFD166]">
+                🍰 Desserts & Gâteaux
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div id="menu-grid" class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+
+            <!-- Ticket de commande rétro -->
+            <div class="bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-3xl p-6 shadow-[6px_6px_0px_#D9468F] sticky top-24">
+                <div class="flex items-center justify-between border-b-2 border-dashed border-[#4A1D2F]/30 pb-3 mb-4">
+                    <h3 class="font-retro text-2xl text-[#D9468F]">Votre Plateau 🐾</h3>
+                    <button onclick="viderPanier()" class="text-xs font-bold underline hover:text-[#D9468F]">Tout vider</button>
+                </div>
+
+                <div id="cart-items" class="space-y-2.5 min-h-[120px] text-sm">
+                    <p class="text-center italic text-[#6D2E46] py-8">Cliquez sur "+ Ajouter" pour composer votre goûter !</p>
+                </div>
+
+                <div class="border-t-2 border-dashed border-[#4A1D2F]/30 mt-5 pt-4 space-y-4">
+                    <div class="flex justify-between items-center font-retro text-2xl">
+                        <span>Total :</span>
+                        <span id="cart-total" class="text-[#D9468F]">0,00 €</span>
+                    </div>
+                    <button onclick="commanderTable()" class="w-full py-3.5 rounded-2xl bg-[#FFD166] hover:bg-[#FF69B4] hover:text-white border-2 border-[#4A1D2F] font-retro text-base shadow-[4px_4px_0px_#4A1D2F] transition-all">
+                        Commander au Comptoir 🔔
+                    </button>
+                    <p id="order-toast" class="hidden text-center text-xs font-bold bg-[#A7F3D0] border-2 border-[#4A1D2F] p-2.5 rounded-xl">
+                        😻 Miaou ! Votre commande part en cuisine !
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION NOS CHATS STARS -->
+    <section id="chats" class="py-20 px-4 sm:px-6 max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="font-retro text-4xl sm:text-5xl text-[#D9468F] drop-shadow-[2px_2px_0px_#FFD166]">
+                La Brigade des Ronrons 🐈‍⬛
+            </h2>
+            <p class="font-semibold text-[#6D2E46] mt-2">Cliquez sur un chat pour lui faire un câlin virtuel !</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div onclick="caresserChat(this)" class="cursor-pointer bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-3xl p-6 text-center shadow-[5px_5px_0px_#FF69B4] hover:-translate-y-2 transition-all">
+                <div class="text-6xl mb-3 float-kitsch">🐱</div>
+                <h3 class="font-retro text-2xl text-[#4A1D2F]">Noisette</h3>
+                <span class="inline-block px-3 py-1 rounded-full bg-[#FFD166] border border-[#4A1D2F] text-xs font-bold my-2">Star 3D du Salon</span>
+                <p class="text-xs text-[#6D2E46]">Ronrons : <span class="ronron-count font-bold text-[#D9468F]">14</span></p>
+            </div>
+
+            <div onclick="caresserChat(this)" class="cursor-pointer bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-3xl p-6 text-center shadow-[5px_5px_0px_#A7F3D0] hover:-translate-y-2 transition-all">
+                <div class="text-6xl mb-3 float-kitsch" style="animation-delay: 0.5s;">🐈‍⬛</div>
+                <h3 class="font-retro text-2xl text-[#4A1D2F]">Chaussette</h3>
+                <span class="inline-block px-3 py-1 rounded-full bg-[#FF9EBB] border border-[#4A1D2F] text-xs font-bold my-2">Diva Vintage</span>
+                <p class="text-xs text-[#6D2E46]">Ronrons : <span class="ronron-count font-bold text-[#D9468F]">22</span></p>
+            </div>
+
+            <div onclick="caresserChat(this)" class="cursor-pointer bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-3xl p-6 text-center shadow-[5px_5px_0px_#FFD166] hover:-translate-y-2 transition-all">
+                <div class="text-6xl mb-3 float-kitsch" style="animation-delay: 1s;">🐈</div>
+                <h3 class="font-retro text-2xl text-[#4A1D2F]">Caramel</h3>
+                <span class="inline-block px-3 py-1 rounded-full bg-[#A7F3D0] border border-[#4A1D2F] text-xs font-bold my-2">Chef Pâtissier</span>
+                <p class="text-xs text-[#6D2E46]">Ronrons : <span class="ronron-count font-bold text-[#D9468F]">19</span></p>
+            </div>
+
+            <div onclick="caresserChat(this)" class="cursor-pointer bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-3xl p-6 text-center shadow-[5px_5px_0px_#C4B5FD] hover:-translate-y-2 transition-all">
+                <div class="text-6xl mb-3 float-kitsch" style="animation-delay: 1.5s;">😺</div>
+                <h3 class="font-retro text-2xl text-[#4A1D2F]">Biscotte</h3>
+                <span class="inline-block px-3 py-1 rounded-full bg-[#DDD6FE] border border-[#4A1D2F] text-xs font-bold my-2">Boule d'Amour</span>
+                <p class="text-xs text-[#6D2E46]">Ronrons : <span class="ronron-count font-bold text-[#D9468F]">31</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION RÉSERVATION -->
+    <section id="reserver" class="py-16 px-4 sm:px-6 max-w-3xl mx-auto">
+        <div class="bg-[#FFF8DC] border-4 border-[#4A1D2F] rounded-[2.5rem] p-8 sm:p-10 scallop-box">
+            <h2 class="font-retro text-3xl sm:text-4xl text-center text-[#D9468F] mb-6">Réserver une Table Cozy 🎀</h2>
+            <form id="booking-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input type="text" required placeholder="Votre prénom" class="px-4 py-3 rounded-2xl bg-white border-2 border-[#4A1D2F] text-sm font-semibold focus:outline-none focus:bg-[#FFE4E1]">
+                <input type="date" required class="px-4 py-3 rounded-2xl bg-white border-2 border-[#4A1D2F] text-sm font-semibold focus:outline-none focus:bg-[#FFE4E1]">
+                <select class="px-4 py-3 rounded-2xl bg-white border-2 border-[#4A1D2F] text-sm font-semibold">
+                    <option>2 personnes (Banquette velours rose)</option>
+                    <option>1 personne (Fauteuil à bascule & plaid)</option>
+                    <option>4 personnes (Table ronde fleurie)</option>
+                </select>
+                <select class="px-4 py-3 rounded-2xl bg-white border-2 border-[#4A1D2F] text-sm font-semibold">
+                    <option>15h00 — Goûter Royal</option>
+                    <option>10h30 — Petit-Déj Ronron</option>
+                    <option>17h00 — Pause Chocolat Ch'aud</option>
+                </select>
+                <button type="submit" class="sm:col-span-2 py-4 rounded-2xl bg-[#FF69B4] text-white border-2 border-[#4A1D2F] font-retro text-lg shadow-[4px_4px_0px_#4A1D2F] hover:scale-[1.01] transition-transform">
+                    Valider ma réservation 💖
+                </button>
+                <p id="booking-ok" class="hidden sm:col-span-2 text-center font-bold text-sm bg-[#A7F3D0] border-2 border-[#4A1D2F] p-3 rounded-xl">
+                    🐾 Youpi ! Votre table vintage est réservée chez Minou-Délice !
+                </p>
+            </form>
+        </div>
+    </section>
+
+    <footer class="py-8 text-center font-bold text-xs border-t-4 border-[#D9468F] bg-[#FFF8DC]">
+        <p>© 2026 Chez Minou-Délice — Créé avec amour par Aïda Dahdouh. One-Page #2/4.</p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ==========================================
+        // 1. CHAT 3D MARRON RÉALISTE & ULTRA-FLUIDE (SANS TREMBLEMENT)
+        // ==========================================
+        const container = document.getElementById('cat-3d-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 0.35, 5.4);
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // Éclairage studio doux (effet fourrure velours)
+        const hemiLight = new THREE.HemisphereLight(0xfff5eb, 0xd8a48f, 0.9);
+        scene.add(hemiLight);
+
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+        keyLight.position.set(3, 5, 5);
+        scene.add(keyLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffb6c1, 0.5);
+        rimLight.position.set(-4, 2, -4);
+        scene.add(rimLight);
+
+        // Matériaux réalistes pelage marron chocolat & noisette
+        const brownFur = new THREE.MeshStandardMaterial({ color: 0x6B4226, roughness: 0.75, metalness: 0.05 }); // Marron chocolat riche
+        const darkBrown = new THREE.MeshStandardMaterial({ color: 0x3E2312, roughness: 0.8 }); // Rayures & pattes foncées
+        const creamFur = new THREE.MeshStandardMaterial({ color: 0xF5E6D3, roughness: 0.7 }); // Poitrail & museau crème
+        const nosePink = new THREE.MeshStandardMaterial({ color: 0xE88D9E, roughness: 0.35 }); // Truffe rose humide
+        const eyeIris = new THREE.MeshStandardMaterial({ color: 0x65A30D, roughness: 0.15, metalness: 0.1 }); // Yeux vert-doré expressifs
+        const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const goldMat = new THREE.MeshStandardMaterial({ color: 0xFBBF24, roughness: 0.25, metalness: 0.8 });
+
+        const catRoot = new THREE.Group();
+        scene.add(catRoot);
+
+        // --- CORPS ASSIS RÉALISTE ---
+        const torso = new THREE.Mesh(new THREE.SphereGeometry(0.88, 36, 36), brownFur);
+        torso.scale.set(0.95, 1.25, 0.9);
+        torso.position.set(0, -0.75, -0.05);
+        catRoot.add(torso);
+
+        // Plastron de fourrure blanche/crème sur la poitrine
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.62, 32, 32), creamFur);
+        chest.scale.set(0.85, 1.1, 0.65);
+        chest.position.set(0, -0.62, 0.42);
+        catRoot.add(chest);
+
+        // Pattes arrière repliées (position assise)
+        function createBackLeg(x) {
+            const leg = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), brownFur);
+            leg.scale.set(0.75, 0.85, 1.2);
+            leg.position.set(x, -1.45, 0.25);
+            return leg;
+        }
+        catRoot.add(createBackLeg(-0.65), createBackLeg(0.65));
+
+        // Pattes avant droites avec chaussettes crème
+        function createFrontPaw(x) {
+            const pawGroup = new THREE.Group();
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.85, 24), brownFur);
+            leg.position.y = -0.35;
+            const foot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), creamFur);
+            foot.scale.set(1, 0.75, 1.2);
+            foot.position.set(0, -0.78, 0.08);
+            pawGroup.add(leg, foot);
+            pawGroup.position.set(x, -0.85, 0.55);
+            return pawGroup;
+        }
+        catRoot.add(createFrontPaw(-0.34), createFrontPaw(0.34));
+
+        // Collier rose rétro + grelot doré
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.07, 16, 32), new THREE.MeshStandardMaterial({ color: 0xEC4899, roughness: 0.4 }));
+        collar.rotation.x = Math.PI / 2 + 0.15;
+        collar.position.set(0, -0.05, 0.05);
+        const bell = new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 20), goldMat);
+        bell.position.set(0, -0.12, 0.62);
+        catRoot.add(collar, bell);
+
+        // --- TÊTE SCULPTÉE ---
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 0.58, 0.08);
+        catRoot.add(headGroup);
+
+        const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.82, 36, 36), brownFur);
+        cranium.scale.set(1.12, 0.96, 0.98);
+        headGroup.add(cranium);
+
+        // Rayures tigrées marron foncé sur le front
+        for (let i = -1; i <= 1; i++) {
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.08), darkBrown);
+            stripe.position.set(i * 0.14, 0.48, 0.74);
+            stripe.rotation.x = -0.35;
+            headGroup.add(stripe);
+        }
+
+        // Bajoues / Museau en 3D
+        const muzzleL = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), creamFur);
+        muzzleL.scale.set(1.1, 0.85, 0.9);
+        muzzleL.position.set(-0.16, -0.16, 0.74);
+        const muzzleR = muzzleL.clone();
+        muzzleR.position.x = 0.16;
+        const chin = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 20), creamFur);
+        chin.position.set(0, -0.28, 0.66);
+        headGroup.add(muzzleL, muzzleR, chin);
+
+        // Truffe triangulaire arrondie
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 20), nosePink);
+        nose.scale.set(1.25, 0.85, 0.8);
+        nose.position.set(0, -0.06, 0.88);
+        headGroup.add(nose);
+
+        // Oreilles pointues réalistes (marron foncé à l'extérieur, rose doux dedans)
+        function createRealisticEar(x, rotZ) {
+            const ear = new THREE.Group();
+            const outer = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.68, 32), darkBrown);
+            outer.scale.set(1, 1, 0.65);
+            const inner = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.48, 32), nosePink);
+            inner.scale.set(1, 1, 0.5);
+            inner.position.set(0, -0.04, 0.08);
+            ear.add(outer, inner);
+            ear.position.set(x, 0.75, -0.02);
+            ear.rotation.z = rotZ;
+            ear.rotation.x = 0.1;
+            return ear;
+        }
+        headGroup.add(createRealisticEar(-0.55, 0.32), createRealisticEar(0.55, -0.32));
+
+        // Yeux réalistes avec iris, pupille et reflet lumineux + paupières pour cligner
+        const eyelids = [];
+        function createRealisticEye(x) {
+            const eyeGroup = new THREE.Group();
+            eyeGroup.position.set(x, 0.12, 0.72);
+
+            const iris = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 24), eyeIris);
+            iris.scale.set(1, 1.05, 0.75);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 20), pupilMat);
+            pupil.scale.set(0.75, 1.15, 0.6);
+            pupil.position.z = 0.08;
+            const glint = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            glint.position.set(0.045, 0.05, 0.13);
+
+            // Paupière marron qui cligne
+            const lid = new THREE.Mesh(new THREE.SphereGeometry(0.168, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), brownFur);
+            lid.rotation.x = -Math.PI / 2;
+            lid.scale.set(1, 0.1, 0.8);
+            eyelids.push(lid);
+
+            eyeGroup.add(iris, pupil, glint, lid);
+            headGroup.add(eyeGroup);
+        }
+        createRealisticEye(-0.33);
+        createRealisticEye(0.33);
+
+        // Moustaches fines (3 de chaque côté)
+        const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xFFF8DC });
+        [-1, 1].forEach(side => {
+            for (let i = 0; i < 3; i++) {
+                const whisker = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.004, 0.65, 8), whiskerMat);
+                whisker.rotation.z = side * (Math.PI / 2 - 0.15 + i * 0.14);
+                whisker.position.set(side * 0.48, -0.14 - i * 0.04, 0.72);
+                headGroup.add(whisker);
+            }
+        });
+
+        // Queue articulée souple derrière
+        const tailPivot = new THREE.Group();
+        tailPivot.position.set(0, -1.35, -0.65);
+        catRoot.add(tailPivot);
+
+        const tailSegments = [];
+        for (let i = 0; i < 6; i++) {
+            const seg = new THREE.Mesh(new THREE.SphereGeometry(0.14 - i * 0.01, 16, 16), i === 5 ? creamFur : brownFur);
+            seg.scale.set(1, 1.6, 1);
+            seg.position.set(0, i * 0.22, -i * 0.08);
+            tailPivot.add(seg);
+            tailSegments.push(seg);
+        }
+
+        // --- CONTRÔLES SOURIS & TACTILE FLUIDES ---
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        let targetRotY = -0.25;
+        let targetRotX = 0.05;
+
+        // Gestion propre du saut (sans aucun tremblement !)
+        let isJumping = false;
+        let jumpProgress = 0;
+
+        function sauterChat3D() {
+            if (!isJumping) {
+                isJumping = true;
+                jumpProgress = 0;
+            }
+        }
+
+        container.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            targetRotY += (e.clientX - prevMouse.x) * 0.012;
+            targetRotX += (e.clientY - prevMouse.y) * 0.008;
+            targetRotX = Math.max(-0.4, Math.min(0.4, targetRotX));
+            prevMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        container.addEventListener('touchstart', (e) => { isDragging = true; prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
+        window.addEventListener('touchend', () => { isDragging = false; });
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            targetRotY += (e.touches[0].clientX - prevMouse.x) * 0.012;
+            prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+
+        // Boucle d'animation parfaitement lisse
+        let time = 0;
+        let blinkTimer = 0;
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            time += 0.03;
+            blinkTimer += 0.03;
+
+            // Rotation douce
+            if (!isDragging) {
+                targetRotY += 0.005;
+            }
+            catRoot.rotation.y += (targetRotY - catRoot.rotation.y) * 0.08;
+            catRoot.rotation.x += (targetRotX - catRoot.rotation.x) * 0.08;
+
+            // Respiration calme + Saut fluide (parabole parfaite)
+            const idleHover = Math.sin(time * 1.5) * 0.04;
+            let jumpOffset = 0;
+
+            if (isJumping) {
+                jumpProgress += 0.045;
+                if (jumpProgress >= Math.PI) {
+                    isJumping = false;
+                    jumpProgress = 0;
+                } else {
+                    jumpOffset = Math.sin(jumpProgress) * 0.75;
+                    catRoot.rotation.y += 0.08; // Petite pirouette joyeuse pendant le saut
+                }
+            }
+            catRoot.position.y = 0.25 + idleHover + jumpOffset;
+
+            // Légère inclinaison mignonne de la tête
+            headGroup.rotation.z = Math.sin(time * 1.2) * 0.06;
+
+            // Clignement des yeux toutes les 3.5 secondes
+            const blinkCycle = blinkTimer % 3.5;
+            const lidScale = (blinkCycle > 3.3) ? Math.sin(((blinkCycle - 3.3) / 0.2) * Math.PI) : 0.05;
+            eyelids.forEach(lid => lid.scale.y = Math.max(0.05, lidScale));
+
+            // Ondulation souple de la queue
+            tailSegments.forEach((seg, idx) => {
+                seg.position.x = Math.sin(time * 2.2 - idx * 0.4) * (0.04 * idx);
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        window.addEventListener('resize', () => {
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // ==========================================
+        // 2. EMPREINTES DE PATTES QUI SUIVENT LA SOURIS
+        // ==========================================
+        let lastPawTime = 0;
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastPawTime > 140) {
+                lastPawTime = now;
+                const paw = document.createElement('div');
+                paw.className = 'cursor-paw';
+                paw.textContent = Math.random() > 0.3 ? '🐾' : '💖';
+                paw.style.left = e.clientX + 'px';
+                paw.style.top = e.clientY + 'px';
+                paw.style.setProperty('--rot', (Math.random() * 40 - 20) + 'deg');
+                document.body.appendChild(paw);
+                setTimeout(() => paw.remove(), 900);
+            }
+        });
+
+        // 3. PLUIE DE CHATONS
+        function pluieDeChats() {
+            const cats = ['🐱', '🐈', '🐈‍⬛', '😻', '😽', '🐾', '🧁'];
+            for (let i = 0; i < 28; i++) {
+                const el = document.createElement('div');
+                el.className = 'falling-cat';
+                el.textContent = cats[Math.floor(Math.random() * cats.length)];
+                el.style.left = Math.random() * 95 + 'vw';
+                el.style.animationDuration = (1.8 + Math.random() * 2) + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4000);
+            }
+        }
+
+        // 4. CARESSER UN CHAT
+        function caresserChat(card) {
+            const counter = card.querySelector('.ronron-count');
+            counter.textContent = parseInt(counter.textContent) + 1;
+            card.classList.add('scale-105');
+            setTimeout(() => card.classList.remove('scale-105'), 200);
+        }
+
+        // 5. CARTE DES GOURMANDISES JEUX DE MOTS
+        const menuItems = [
+            { id: 1, name: "Cappu-minou", cat: "boisson", price: 4.50, icon: "☕", bg: "bg-[#FFE4E1]", desc: "Mousse de lait onctueuse avec oreilles en chantilly et cacao." },
+            { id: 2, name: "Chai-Chat Latte", cat: "boisson", price: 5.00, icon: "🫖", bg: "bg-[#FEF3C7]", desc: "Thé épicé doux à la cannelle, miel doré et lait velouté." },
+            { id: 3, name: "Chocolat Ch'aud", cat: "boisson", price: 5.20, icon: "🍫", bg: "bg-[#FCE7F3]", desc: "Chocolat fondue rétro surmonté de guimauves pattes de chat." },
+            { id: 4, name: "Thé Matchat", cat: "boisson", price: 4.80, icon: "🍵", bg: "bg-[#D1FAE5]", desc: "Matcha japonais doux fouetté au lait d'avoine vanillé." },
+            { id: 5, name: "Ch'tiramisu Maison", cat: "dessert", price: 6.50, icon: "🍰", bg: "bg-[#FEF3C7]", desc: "Crème mascarpone légère et pochoir tête de chat en cacao." },
+            { id: 6, name: "Miaou-ffin Myrtille", cat: "dessert", price: 4.20, icon: "🧁", bg: "bg-[#EDE9FE]", desc: "Muffin tout chaud aux myrtilles sauvages et glaçage rose." },
+            { id: 7, name: "Chat-rlotte Fraise", cat: "dessert", price: 6.00, icon: "🍓", bg: "bg-[#FFE4E1]", desc: "Biscuits roses de Reims, crème vanille et fraises fraîches." },
+            { id: 8, name: "Éclair au Ch'ocolat", cat: "dessert", price: 4.90, icon: "🥐", bg: "bg-[#FCE7F3]", desc: "Pâte à choux dorée garnie d'une crème au chocolat fondant." }
+        ];
+
+        let cart = [];
+        let filter = 'all';
+
+        function renderMenu() {
+            const grid = document.getElementById('menu-grid');
+            const list = filter === 'all' ? menuItems : menuItems.filter(i => i.cat === filter);
+            grid.innerHTML = list.map(item => `
+                <div class="${item.bg} border-4 border-[#4A1D2F] rounded-3xl p-5 shadow-[4px_4px_0px_#4A1D2F] hover:-translate-y-1 transition-transform flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-3xl bg-white border-2 border-[#4A1D2F] w-12 h-12 rounded-2xl flex items-center justify-center">${item.icon}</span>
+                            <span class="font-retro text-xl text-[#D9468F] bg-white px-3 py-1 rounded-full border-2 border-[#4A1D2F]">${item.price.toFixed(2).replace('.', ',')} €</span>
+                        </div>
+                        <h3 class="font-retro text-xl text-[#4A1D2F] mt-2 mb-1">${item.name}</h3>
+                        <p class="text-xs font-medium text-[#6D2E46] mb-4">${item.desc}</p>
+                    </div>
+                    <button onclick="ajouterPanier(${item.id})" class="w-full py-2.5 rounded-xl bg-white hover:bg-[#FF69B4] hover:text-white border-2 border-[#4A1D2F] font-bold text-xs shadow-[2px_2px_0px_#4A1D2F] transition-colors">
+                        + Ajouter au plateau 🐾
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function filtrerMenu(cat, btn) {
+            filter = cat;
+            document.querySelectorAll('.menu-filter').forEach(b => {
+                b.classList.remove('bg-[#4A1D2F]', 'text-[#FFF8DC]');
+                b.classList.add('bg-[#FFF8DC]', 'text-[#4A1D2F]');
+            });
+            btn.classList.remove('bg-[#FFF8DC]', 'text-[#4A1D2F]');
+            btn.classList.add('bg-[#4A1D2F]', 'text-[#FFF8DC]');
+            renderMenu();
+        }
+
+        function ajouterPanier(id) {
+            cart.push(menuItems.find(i => i.id === id));
+            updateCart();
+        }
+
+        function viderPanier() {
+            cart = [];
+            updateCart();
+        }
+
+        function updateCart() {
+            const total = cart.reduce((s, i) => s + i.price, 0);
+            const str = total.toFixed(2).replace('.', ',') + ' €';
+            document.getElementById('cart-total').textContent = str;
+            document.getElementById('nav-total').textContent = str;
+
+            const box = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                box.innerHTML = `<p class="text-center italic text-[#6D2E46] py-8">Cliquez sur "+ Ajouter" pour composer votre goûter !</p>`;
+                return;
+            }
+            box.innerHTML = cart.map(i => `
+                <div class="flex justify-between items-center bg-white border-2 border-[#4A1D2F] px-3 py-2 rounded-xl font-semibold">
+                    <span>${i.icon} ${i.name}</span>
+                    <span class="text-[#D9468F]">${i.price.toFixed(2).replace('.', ',')} €</span>
+                </div>
+            `).join('');
+        }
+
+        function commanderTable() {
+            if (cart.length === 0) return;
+            pluieDeChats();
+            const toast = document.getElementById('order-toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); viderPanier(); }, 3500);
+        }
+
+        document.getElementById('booking-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            pluieDeChats();
+            const ok = document.getElementById('booking-ok');
+            ok.classList.remove('hidden');
+            e.target.reset();
+            setTimeout(() => ok.classList.add('hidden'), 5000);
+        });
+
+        renderMenu();
+    </script>
+</body>
+</html>
